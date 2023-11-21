@@ -2,11 +2,14 @@
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "baseUrl": "src",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["./src/*"]
+    },
     "outDir": "dist",
     "target": "ESNext",
     "sourceMap": true,
     "noImplicitAny": true
   },
-  "include": ["src/**/*"]
+  "include": ["src"]
 }

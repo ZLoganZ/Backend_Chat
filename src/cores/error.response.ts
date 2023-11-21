@@ -1,18 +1,12 @@
-import { Response } from 'express';
+import { statusCodes } from 'utils/statusCodes';
+import { reasonPhrases } from 'utils/reasonPhrases';
 
-import { statusCodes } from '../utils/statusCodes';
-import { reasonPhrases } from '../utils/reasonPhrases';
-
-class ErrorResponse {
+class ErrorResponse extends Error {
   public code: number;
-  public message: string;
 
   constructor(code: number, message: string) {
+    super(message);
     this.code = code;
-    this.message = message;
-  }
-  send(res: Response) {
-    return res.status(this.code).json(this);
   }
 }
 

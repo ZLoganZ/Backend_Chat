@@ -5,7 +5,7 @@ import User from 'models/users';
 import { RequestWithUser } from 'types';
 import { NotFound, Unauthorized } from 'cores/error.response';
 
-export const isAuth = async (req: RequestWithUser, _: Response, next: NextFunction) => {
+export const Authentication = async (req: RequestWithUser, _: Response, next: NextFunction) => {
   try {
     const accessToken = get(req, 'cookies.accessToken');
     const refreshToken = get(req, 'cookies.refreshToken');
