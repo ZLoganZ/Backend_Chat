@@ -8,6 +8,7 @@ const KeyTokenSchema = new Schema(
     user: {
       type: Types.ObjectId,
       ref: 'User',
+      index: true,
       required: true
     },
     publicKey: {
@@ -42,23 +43,18 @@ class Key {
     }).lean();
   }
   static async findByRefreshToken(refreshToken: string) {
-    return KeyModel.findOne({ refreshToken }).lean();
+    return await KeyModel.findOne({ refreshToken }).lean();
   }
-  static async deleteKeyByID(userID: Types.ObjectId) {
-    return await KeyModel.findOneAndDelete({ user: userID });
+  static async deleteKeyByID(KeyID: string) {
+    return await KeyModel.findOneAndDelete({ _id: KeyID }).lean();
   }
-  static async findByUserID(userID: Types.ObjectId) {
-    return await KeyModel.findOne({ user: userID });
+  static async findByUserID(userID: string) {
+    return await KeyModel.findOne({ user: userID }).lean();
   }
-  static async removeKeyByID(KeyID: Types.ObjectId) {
-    return await KeyModel.findByIdAndDelete(KeyID);
+  static async removeKeyByID(KeyID: string) {
+    return await KeyModel.findByIdAndDelete(KeyID).lean();
   }
-  static async createKeyToken(
-    userID: Types.ObjectId,
-    publicKey: string,
-    privateKey: string,
-    refreshToken: string
-  ) {
+  static async createKeyToken(userID: string, publicKey: string, privateKey: string, refreshToken: string) {
     const update = {
       publicKey,
       privateKey,
@@ -66,8 +62,11 @@ class Key {
       refreshToken
     };
 
-    const tokens = await KeyModel.findOneAndUpdate({ user: userID }, update, { upsert: true, new: true });
-    return tokens || null;
+    const tokens = await KeyModel.findOneAndUpdate({ user: userID }, update, {
+      upsert: true,
+      new: true
+    }).lean();
+    return tokens;
   }
 }
 

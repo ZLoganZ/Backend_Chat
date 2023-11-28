@@ -1,12 +1,17 @@
 import { Router } from 'express';
 
-import AuthController from 'controllers/authentication';
+import AuthController from 'controllers/authController';
 import { asyncHandler } from 'utils';
+import { Authentication } from 'middlewares';
 
-export default (router: Router) => {
-  router.post('/auth/checkEmail', asyncHandler(AuthController.checkEmail));
-  router.post('/auth/verifyEmail', asyncHandler(AuthController.verifyEmail));
-  router.post('/auth/login', asyncHandler(AuthController.login));
-  router.post('/auth/register', asyncHandler(AuthController.register));
-  router.post('/auth/logout', asyncHandler(AuthController.logout));
-};
+const router = Router();
+
+router.post('/checkEmail', asyncHandler(AuthController.checkEmail));
+router.post('/verifyEmail', asyncHandler(AuthController.verifyEmail));
+router.post('/login', asyncHandler(AuthController.login));
+router.post('/register', asyncHandler(AuthController.register));
+router.use(Authentication);
+router.post('/logout', asyncHandler(AuthController.logout));
+router.get('/me', asyncHandler(AuthController.me));
+
+export default router;

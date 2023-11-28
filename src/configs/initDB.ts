@@ -6,7 +6,7 @@ const connectDB = () => {
   mongoose.set('debug', true);
   mongoose.set('debug', { color: true });
   mongoose.Promise = global.Promise;
-  mongoose.connect(dbURL + 'chatApp');
+  mongoose.connect(dbURL + 'InstaFram');
   mongoose.connection.on('connected', () => {
     console.log('Connected to database');
   });

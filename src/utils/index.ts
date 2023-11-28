@@ -64,3 +64,6 @@ export const getSelectData = (select: string[] = []) => {
 export const getUnSelectData = (unselect: string[] = []) => {
   return Object.fromEntries(unselect.map((field) => [field, 0]));
 };
+export const strToArr = (str: string) => {
+  return str.split(',').map((item) => item.trim());
+}

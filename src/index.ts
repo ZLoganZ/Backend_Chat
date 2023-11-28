@@ -8,12 +8,18 @@ import morgan from 'morgan';
 import compression from 'compression';
 
 import routers from 'routers';
+import { CustomError } from 'types';
 import connectDB from 'configs/initDB';
 import { SenderMailServer } from 'configs/email_config';
 
 const app = express();
 
-app.use(cors({ credentials: true }));
+app.use(
+  cors({
+    origin: 'http://localhost:4000',
+    credentials: true
+  })
+);
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(compression());
@@ -21,21 +27,11 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/v1', routers());
-
-class CustomError extends Error {
-  code: number;
-
-  constructor(message?: string, code: number = 500) {
-    super(message);
-    this.code = code;
-  }
-}
+app.use('/api/v1', routers);
 
 // handling error
 app.use((_, __, next) => {
-  const error = new CustomError('Not found');
-  error.code = 404;
+  const error = new CustomError('Not found route', 404);
   next(error);
 });
 
@@ -51,6 +47,8 @@ SenderMailServer();
 
 const server = http.createServer(app);
 
-server.listen(8080, () => {
-  console.log('Server is running on port 8080');
+const PORT = process.env.PORT || 8080;
+
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
