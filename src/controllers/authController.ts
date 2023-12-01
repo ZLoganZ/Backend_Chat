@@ -14,13 +14,10 @@ class AuthController {
     );
   }
   static async login(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Login successfully', await AuthService.login(req.body.email, req.body.password, res)).send(res);
+    new Ok('Login successfully', await AuthService.login({ ...req.body, res })).send(res);
   }
   static async register(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Created(
-      'Register successfully',
-      await AuthService.register(req.body.name, req.body.email, req.body.password, req.body.alias, res)
-    ).send(res);
+    new Created('Register successfully', await AuthService.register({ ...req.body, res })).send(res);
   }
   static async logout(req: RequestWithUser, res: Response, _: NextFunction) {
     new Accepted('Logout successfully', await AuthService.logout(req.user.refreshToken)).send(res);

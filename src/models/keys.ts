@@ -6,7 +6,7 @@ const COLLECTION_NAME = 'keys';
 const KeyTokenSchema = new Schema(
   {
     user: {
-      type: Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       index: true,
       required: true
@@ -30,44 +30,46 @@ const KeyTokenSchema = new Schema(
   },
   {
     timestamps: true,
-    collection: COLLECTION_NAME
+    collection: COLLECTION_NAME,
+    statics: {
+      async findByRefreshTokenUsed(refreshToken: string) {
+        return await this.findOne({
+          refreshTokensUsed: refreshToken
+        }).lean();
+      },
+      async findByRefreshToken(refreshToken: string) {
+        return await this.findOne({ refreshToken }).lean();
+      },
+      async deleteKeyByID(keyID: string | Types.ObjectId) {
+        return await this.findOneAndDelete({ _id: keyID }).lean();
+      },
+      async findByUserID(userID: string | Types.ObjectId) {
+        return await this.findOne({ user: userID }).lean();
+      },
+      async removeKeyByID(keyID: string | Types.ObjectId) {
+        return await this.findByIdAndDelete(keyID).lean();
+      },
+      async createKeyToken(
+        userID: string | Types.ObjectId,
+        publicKey: string,
+        privateKey: string,
+        refreshToken: string
+      ) {
+        const update = {
+          publicKey,
+          privateKey,
+          refreshTokensUsed: [] as string[],
+          refreshToken
+        };
+
+        const tokens = await this.findOneAndUpdate({ user: userID }, update, {
+          upsert: true,
+          new: true
+        }).lean();
+        return tokens;
+      }
+    }
   }
 );
 
-const KeyModel = model(DOCUMENT_NAME, KeyTokenSchema);
-
-class Key {
-  static async findByRefreshTokenUsed(refreshToken: string) {
-    return await KeyModel.findOne({
-      refreshTokensUsed: refreshToken
-    }).lean();
-  }
-  static async findByRefreshToken(refreshToken: string) {
-    return await KeyModel.findOne({ refreshToken }).lean();
-  }
-  static async deleteKeyByID(KeyID: string) {
-    return await KeyModel.findOneAndDelete({ _id: KeyID }).lean();
-  }
-  static async findByUserID(userID: string) {
-    return await KeyModel.findOne({ user: userID }).lean();
-  }
-  static async removeKeyByID(KeyID: string) {
-    return await KeyModel.findByIdAndDelete(KeyID).lean();
-  }
-  static async createKeyToken(userID: string, publicKey: string, privateKey: string, refreshToken: string) {
-    const update = {
-      publicKey,
-      privateKey,
-      refreshTokensUsed: [] as string[],
-      refreshToken
-    };
-
-    const tokens = await KeyModel.findOneAndUpdate({ user: userID }, update, {
-      upsert: true,
-      new: true
-    }).lean();
-    return tokens;
-  }
-}
-
-export default Key;
+export const KeyModel = model(DOCUMENT_NAME, KeyTokenSchema);

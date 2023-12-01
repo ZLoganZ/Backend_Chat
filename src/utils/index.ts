@@ -58,12 +58,12 @@ export const getInfoData = (options: { fields: string[]; object: Record<string, 
   const { fields, object } = options;
   return _.pick(object, fields);
 };
-export const getSelectData = (select: string[] = []) => {
+export const getSelectData = (select: string[]) => {
   return Object.fromEntries(select.map((field) => [field, 1]));
 };
-export const getUnSelectData = (unselect: string[] = []) => {
+export const getUnSelectData = (unselect: string[]) => {
   return Object.fromEntries(unselect.map((field) => [field, 0]));
 };
 export const strToArr = (str: string) => {
   return str.split(',').map((item) => item.trim());
-}
+};

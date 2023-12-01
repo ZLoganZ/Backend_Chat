@@ -1,5 +1,6 @@
 import { Schema, model, Types } from 'mongoose';
-import { selectUser } from 'utils/constants';
+import { FILTERS, IPost, IUser } from 'types';
+import { selectPostObj, selectUserPopulate, selectUserPopulateObj } from 'utils/constants';
 
 const DOCUMENT_NAME = 'Post';
 const COLLECTION_NAME = 'posts';
@@ -8,18 +9,18 @@ const PostSchema = new Schema(
   {
     content: { type: String, required: true },
     creator: {
-      type: Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       index: true,
       required: true
     },
     likes: {
-      type: [Types.ObjectId],
+      type: [Schema.Types.ObjectId],
       ref: 'User',
       default: []
     },
     saves: {
-      type: [Types.ObjectId],
+      type: [Schema.Types.ObjectId],
       ref: 'Save',
       default: []
     },
@@ -38,166 +39,283 @@ const PostSchema = new Schema(
   },
   {
     timestamps: true,
-    collection: COLLECTION_NAME
+    collection: COLLECTION_NAME,
+    statics: {
+      async getPosts(page: string, sort: string = 'createdAt') {
+        const limit = 12;
+        const skip = parseInt(page) * limit;
+        return await this.find()
+          .skip(skip)
+          .limit(limit)
+          .populate<{ creator: IUser }>({
+            path: 'creator',
+            select: selectUserPopulate
+          })
+          .populate<{ likes: IUser[] }>({
+            path: 'likes',
+            select: selectUserPopulate
+          })
+          .populate<{ saves: { user: IUser[] } }>({
+            path: 'saves',
+            select: '-_id -__v -post',
+            populate: [
+              {
+                path: 'user',
+                select: selectUserPopulate
+              }
+            ]
+          })
+          .select('-__v -updatedAt')
+          .sort({ [sort]: -1 })
+          .lean();
+      },
+      async getTopPosts(page: string, filter: FILTERS = 'All') {
+        const limit = 12;
+        const skip = parseInt(page) * limit;
+
+        return await this.aggregate<IPost>([
+          {
+            $project: {
+              ...selectPostObj,
+              likesCount: { $size: '$likes' },
+              savesCount: { $size: '$saves' }
+            }
+          },
+          {
+            $sort: { likesCount: -1, savesCount: -1 }
+          },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'creator',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'creator'
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'likes',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'likes'
+            }
+          },
+          {
+            $lookup: {
+              from: 'saves',
+              localField: 'saves',
+              foreignField: '_id',
+              as: 'saves',
+              pipeline: [
+                { $project: { _id: 0, user: 1 } },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    pipeline: [{ $project: selectUserPopulateObj }],
+                    as: 'user'
+                  }
+                }
+              ]
+            }
+          },
+          { $unwind: '$creator' },
+          { $project: selectPostObj }
+        ]);
+      },
+      async getPostByID(id: string | Types.ObjectId) {
+        return await this.findById(id)
+          .populate<{ creator: IUser }>({
+            path: 'creator',
+            select: selectUserPopulate
+          })
+          .populate<{ likes: IUser[] }>({
+            path: 'likes',
+            select: selectUserPopulate
+          })
+          .populate<{ saves: { user: IUser[] } }>({
+            path: 'saves',
+            select: '-_id -__v -post',
+            populate: [
+              {
+                path: 'user',
+                select: selectUserPopulate
+              }
+            ]
+          })
+          .select('-__v -updatedAt')
+          .lean();
+      },
+      async createPost(values: Record<string, any>) {
+        return await (
+          await this.create(values)
+        ).populate<{ creator: IUser }>({
+          path: 'creator',
+          select: selectUserPopulate
+        });
+      },
+      async deletePost(id: string | Types.ObjectId) {
+        return await this.findByIdAndDelete(id).lean();
+      },
+      async updatePost(id: string | Types.ObjectId, values: Record<string, any>) {
+        return await this.findByIdAndUpdate(id, values, { new: true }).lean();
+      },
+      async likePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
+        return await this.findByIdAndUpdate(id, { $push: { likes: userID } }, { new: true }).lean();
+      },
+      async savePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
+        return await this.findByIdAndUpdate(id, { $push: { saves: userID } }, { new: true }).lean();
+      },
+      async unlikePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
+        return await this.findByIdAndUpdate(id, { $pull: { likes: userID } }, { new: true }).lean();
+      },
+      async unsavePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
+        return await this.findByIdAndUpdate(id, { $pull: { saves: userID } }, { new: true }).lean();
+      },
+      async searchPosts(query: string, filter: FILTERS = 'All') {
+        return await this.find({ $text: { $search: query } })
+          .populate<{ creator: IUser }>({
+            path: 'creator',
+            select: selectUserPopulate
+          })
+          .populate<{ likes: IUser[] }>({
+            path: 'likes',
+            select: selectUserPopulate
+          })
+          .populate<{ saves: { user: IUser[] } }>({
+            path: 'saves',
+            select: '-_id -__v -post',
+            populate: [
+              {
+                path: 'user',
+                select: selectUserPopulate
+              }
+            ]
+          })
+          .select('-__v -updatedAt')
+          .lean();
+      },
+      async getPostsByUserID(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
+        const limit = 12;
+        const skip = parseInt(page) * limit;
+        return await this.find({ creator: userID })
+          .skip(skip)
+          .limit(limit)
+          .populate<{ creator: IUser }>({
+            path: 'creator',
+            select: selectUserPopulate
+          })
+          .populate<{ likes: IUser[] }>({
+            path: 'likes',
+            select: selectUserPopulate
+          })
+          .populate<{ saves: { user: IUser[] } }>({
+            path: 'saves',
+            select: '-_id -__v -post',
+            populate: [
+              {
+                path: 'user',
+                select: selectUserPopulate
+              }
+            ]
+          })
+          .select('-__v -updatedAt')
+          .sort({ [sort]: -1 })
+          .lean();
+      },
+      async getLikedPostsByUserID(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
+        const limit = 12;
+        const skip = parseInt(page) * limit;
+        return await this.find({ likes: { $in: userID } })
+          .skip(skip)
+          .limit(limit)
+          .populate<{ creator: IUser }>({
+            path: 'creator',
+            select: selectUserPopulate
+          })
+          .populate<{ likes: IUser[] }>({
+            path: 'likes',
+            select: selectUserPopulate
+          })
+          .populate<{ saves: { user: IUser[] } }>({
+            path: 'saves',
+            select: '-_id -__v -post',
+            populate: [
+              {
+                path: 'user',
+                select: selectUserPopulate
+              }
+            ]
+          })
+          .select('-__v -updatedAt')
+          .sort({ [sort]: -1 })
+          .lean();
+      },
+      async getRelatedPostsByPostID(postID: string | Types.ObjectId) {
+        const post = await this.findById(postID).lean();
+
+        return await this.aggregate<IPost>([
+          {
+            $match: {
+              $or: [{ tags: { $in: post.tags } }, { location: { $regex: post.location, $options: 'i' } }],
+              _id: { $ne: new Types.ObjectId(postID) }
+            }
+          },
+          { $addFields: { sharedTags: { $setIntersection: ['$tags', post.tags] } } },
+          { $addFields: { sharedTagsCount: { $size: '$sharedTags' } } },
+          { $sort: { sharedTagsCount: -1 } },
+          { $limit: 3 },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'creator',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'creator'
+            }
+          },
+          { $unwind: '$creator' },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'likes',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'likes'
+            }
+          },
+          {
+            $lookup: {
+              from: 'saves',
+              localField: 'saves',
+              foreignField: '_id',
+              as: 'saves',
+              pipeline: [
+                { $project: { _id: 0, user: 1 } },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    pipeline: [{ $project: selectUserPopulateObj }],
+                    as: 'user'
+                  }
+                }
+              ]
+            }
+          },
+          { $project: { __v: 0, updatedAt: 0, sharedTags: 0, sharedTagsCount: 0 } }
+        ]);
+      }
+    }
   }
 );
 
 PostSchema.index({ content: 'text', tags: 'text', location: 'text' });
 
-const PostModel = model(DOCUMENT_NAME, PostSchema);
-
-class Post {
-  static async getPosts(page: string, sort = 'createdAt') {
-    const limit = 12;
-    const skip = parseInt(page) * limit;
-    return await PostModel.find()
-      .populate({
-        path: 'creator',
-        select: selectUser
-      })
-      .populate({
-        path: 'likes',
-        select: selectUser
-      })
-      .populate({
-        path: 'saves',
-        populate: [
-          {
-            path: 'user',
-            select: selectUser
-          }
-        ]
-      })
-      .select('-__v -updatedAt')
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sort]: -1 })
-      .lean();
-  }
-  static async getPostByID(id: string) {
-    return await PostModel.findById(id)
-      .populate({
-        path: 'creator',
-        select: selectUser
-      })
-      .populate({
-        path: 'likes',
-        select: selectUser
-      })
-      .populate({
-        path: 'saves',
-        populate: [
-          {
-            path: 'user',
-            select: selectUser
-          }
-        ]
-      })
-      .select('-__v -updatedAt')
-      .lean();
-  }
-  static async createPost(values: Record<string, any>) {
-    return await (
-      await PostModel.create(values)
-    ).populate({
-      path: 'creator',
-      select: selectUser
-    });
-  }
-  static async deletePost(id: string) {
-    return await PostModel.findByIdAndDelete(id).lean();
-  }
-  static async updatePost(id: string, values: Record<string, any>) {
-    return await PostModel.findByIdAndUpdate(id, values, { new: true }).lean();
-  }
-  static async likePost(id: string, userID: string) {
-    return await PostModel.findByIdAndUpdate(id, { $push: { likes: userID } }, { new: true }).lean();
-  }
-  static async savePost(id: string, userID: string) {
-    return await PostModel.findByIdAndUpdate(id, { $push: { saves: userID } }, { new: true }).lean();
-  }
-  static async unlikePost(id: string, userID: string) {
-    return await PostModel.findByIdAndUpdate(id, { $pull: { likes: userID } }, { new: true }).lean();
-  }
-  static async unsavePost(id: string, userID: string) {
-    return await PostModel.findByIdAndUpdate(id, { $pull: { saves: userID } }, { new: true }).lean();
-  }
-  static async searchPosts(query: string) {
-    return await PostModel.find({ $text: { $search: query } })
-      .populate({
-        path: 'creator',
-        select: selectUser
-      })
-      .populate({
-        path: 'likes',
-        select: selectUser
-      })
-      .populate({
-        path: 'saves',
-        populate: [
-          {
-            path: 'user',
-            select: selectUser
-          }
-        ]
-      })
-      .select('-__v -updatedAt')
-      .lean();
-  }
-  static async getPostsByUserID(userID: string, page: string, sort = 'createdAt') {
-    const limit = 12;
-    const skip = parseInt(page) * limit;
-    return await PostModel.find({ creator: userID })
-      .populate({
-        path: 'creator',
-        select: selectUser
-      })
-      .populate({
-        path: 'likes',
-        select: selectUser
-      })
-      .populate({
-        path: 'saves',
-        populate: [
-          {
-            path: 'user',
-            select: selectUser
-          }
-        ]
-      })
-      .select('-__v -updatedAt')
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sort]: -1 })
-      .lean();
-  }
-  static async getLikedPostsByUserID(userID: string, page: string, sort = 'createdAt') {
-    const limit = 12;
-    const skip = parseInt(page) * limit;
-    return await PostModel.find({ likes: { $in: userID } })
-      .populate({
-        path: 'creator',
-        select: selectUser
-      })
-      .populate({
-        path: 'likes',
-        select: selectUser
-      })
-      .populate({
-        path: 'saves',
-        populate: [
-          {
-            path: 'user',
-            select: selectUser
-          }
-        ]
-      })
-      .select('-__v -updatedAt')
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sort]: -1 })
-      .lean();
-  }
-}
-
-export default Post;
+export const PostModel = model(DOCUMENT_NAME, PostSchema);

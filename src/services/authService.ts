@@ -1,8 +1,8 @@
 import { Response } from 'express';
 import crypto from 'crypto';
 
-import User from 'models/users';
-import Key from 'models/keys';
+import { UserModel } from 'models/users';
+import { KeyModel } from 'models/keys';
 import { BadRequest, Unauthorized } from 'cores/error.response';
 import { hash, compare, createTokenPair, getInfoData } from 'utils';
 import { sendMailVerifyEmail } from 'configs/email_config';
@@ -38,7 +38,7 @@ const storeCache = (email: string) => {
 class AuthService {
   static async checkEmail(email: string) {
     // Check if email is exist
-    const user = await User.getUserByEmail(email);
+    const user = await UserModel.getUserByEmail(email);
     if (user) throw new BadRequest('Email is already exist');
 
     const cacheEmail = getCache(email);
@@ -70,9 +70,11 @@ class AuthService {
     // Return success message
     return { verified: true };
   }
-  static async login(email: string, password: string, res: Response) {
+  static async login(payload: { email: string; password: string; res: Response }) {
+    const { email, password, res } = payload;
+
     // Check if email is exist
-    const user = await User.getUserByEmail(email);
+    const user = await UserModel.getUserByEmail(email);
     if (!user) throw new BadRequest('Email is not exist');
 
     // Check if password is correct
@@ -96,7 +98,12 @@ class AuthService {
     const tokens = createTokenPair({ id: user._id, email: user.email }, publicKey, privateKey);
 
     // Save token pair
-    const key = await Key.createKeyToken(user._id.toString(), publicKey, privateKey, tokens.refreshToken);
+    const key = await KeyModel.createKeyToken(
+      user._id.toString(),
+      publicKey,
+      privateKey,
+      tokens.refreshToken
+    );
     if (!key) throw new BadRequest('Something went wrong');
 
     res.cookie('refreshToken', tokens.refreshToken);
@@ -111,18 +118,26 @@ class AuthService {
       tokens
     };
   }
-  static async register(name: string, email: string, password: string, alias: string, res: Response) {
+  static async register(payload: {
+    name: string;
+    email: string;
+    password: string;
+    alias: string;
+    res: Response;
+  }) {
+    const { name, email, password, alias, res } = payload;
+
     // Check if alias is exist
-    const userAlias = await User.getUserByAlias(alias);
+    const userAlias = await UserModel.getUserByAlias(alias);
     if (userAlias) throw new BadRequest('Alias is already used');
     // Check if email is exist
-    const user = await User.getUserByEmail(email);
+    const user = await UserModel.getUserByEmail(email);
     if (user) throw new BadRequest('Email is already exist');
 
     const hashPassword = await hash(password);
 
     // Create user
-    const newUser = await User.createUser({ name, email, password: hashPassword, alias });
+    const newUser = await UserModel.createUser({ name, email, password: hashPassword, alias });
     if (!newUser) throw new BadRequest('Something went wrong');
 
     // Generate access token
@@ -142,7 +157,12 @@ class AuthService {
     const tokens = createTokenPair({ id: newUser._id, email: newUser.email }, publicKey, privateKey);
 
     // Save token pair
-    const key = await Key.createKeyToken(newUser._id.toString(), publicKey, privateKey, tokens.refreshToken);
+    const key = await KeyModel.createKeyToken(
+      newUser._id.toString(),
+      publicKey,
+      privateKey,
+      tokens.refreshToken
+    );
     if (!key) throw new BadRequest('Something went wrong');
 
     res.cookie('refreshToken', tokens.refreshToken);
@@ -159,11 +179,11 @@ class AuthService {
   }
   static async logout(refreshToken: string) {
     // Check if refresh token is exist
-    const key = await Key.findByRefreshToken(refreshToken);
+    const key = await KeyModel.findByRefreshToken(refreshToken);
     if (!key) throw new BadRequest('Refresh token is not exist');
 
     // Delete refresh token
-    const deletedKey = await Key.deleteKeyByID(key._id.toString());
+    const deletedKey = await KeyModel.deleteKeyByID(key._id.toString());
     if (!deletedKey) throw new BadRequest('Something went wrong');
 
     // Return success message
@@ -171,8 +191,8 @@ class AuthService {
   }
   static async me(id: string) {
     // Check if user is exist
-    const user = await User.getUserByID(id);
-    if (!user) throw new BadRequest('User is not exist');
+    const user = await UserModel.getUserByID(id);
+    if (!user) throw new BadRequest('UserModel is not exist');
 
     // Return user
     return getInfoData({

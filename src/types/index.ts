@@ -13,10 +13,13 @@ export interface RequestWithUser extends Request {
 export interface IUser {
   _id: string;
   name: string;
-  alias: string;
   email: string;
+  alias: string;
   image: string;
   bio: string;
+  posts: IPost[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IPost {
@@ -65,3 +68,5 @@ export class CustomError extends Error {
     this.code = code;
   }
 }
+
+export type FILTERS = 'All' | 'Today' | 'Yesterday' | 'Week' | 'Month' | 'Year';

@@ -14,7 +14,13 @@ class UserController {
   static async updateUser(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(
       'Update user successfully',
-      await UserService.updateUser(req.user._id, { ...req.body, image: req.file })
+      await UserService.updateUser({ userID: req.user._id, updateUser: { ...req.body, image: req.file } })
+    ).send(res);
+  }
+  static async followUser(req: RequestWithUser, res: Response, _: NextFunction) {
+    new Accepted(
+      'Follow user successfully',
+      await UserService.followUser({ userID: req.user._id, followID: req.params.userID })
     ).send(res);
   }
 }

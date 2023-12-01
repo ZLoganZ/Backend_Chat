@@ -1,4 +1,5 @@
 import { Schema, model, Types } from 'mongoose';
+import { IUser } from 'types';
 import { getSelectData } from 'utils';
 import { selectPostArr, selectUserArr } from 'utils/constants';
 
@@ -11,8 +12,18 @@ const UserSchema = new Schema(
     email: { type: String, required: true, index: true, unique: true },
     password: { type: String, required: true, select: false },
     posts: {
-      type: [Types.ObjectId],
+      type: [Schema.Types.ObjectId],
       ref: 'Post',
+      default: []
+    },
+    followers: {
+      type: [Schema.Types.ObjectId],
+      ref: 'User',
+      default: []
+    },
+    following: {
+      type: [Schema.Types.ObjectId],
+      ref: 'User',
       default: []
     },
     bio: {
@@ -22,6 +33,7 @@ const UserSchema = new Schema(
     alias: {
       type: String,
       required: true,
+      lowercase: true,
       index: true,
       unique: true
     },
@@ -32,61 +44,70 @@ const UserSchema = new Schema(
   },
   {
     timestamps: true,
-    collection: COLLECTION_NAME
+    collection: COLLECTION_NAME,
+    methods: {
+      async getFollowers() {
+        return await model(DOCUMENT_NAME)
+          .find({ _id: { $in: this.followers } })
+          .lean();
+      },
+      async getFollowing() {
+        return await model(DOCUMENT_NAME)
+          .find({ _id: { $in: this.following } })
+          .lean();
+      }
+    },
+    statics: {
+      async getUsers() {
+        return this.find().lean();
+      },
+      async getUserByEmail(email: string) {
+        return await this.findOne({ email }).select('+password').lean();
+      },
+      async getUserByAlias(alias: string) {
+        return await this.findOne({ alias }).lean();
+      },
+      async getUserByID(id: string | Types.ObjectId) {
+        return await this.findById(id).lean();
+      },
+      async createUser(values: Record<string, any>) {
+        return await this.create(values);
+      },
+      async deleteUser(id: string | Types.ObjectId) {
+        return await this.findByIdAndDelete(id).lean();
+      },
+      async updateUser(id: string | Types.ObjectId, values: Record<string, any>) {
+        return await this.findByIdAndUpdate(id, values, { new: true }).lean();
+      },
+      async getTopCreators() {
+        return await this.aggregate<IUser>([
+          {
+            $project: {
+              ...getSelectData(selectUserArr),
+              postCount: { $size: '$posts' }
+            }
+          },
+          {
+            $sort: { postCount: -1 }
+          },
+          {
+            $limit: 12
+          },
+          {
+            $lookup: {
+              from: 'posts',
+              localField: 'posts',
+              foreignField: '_id',
+              pipeline: [{ $project: getSelectData(selectPostArr) }],
+              as: 'posts'
+            }
+          }
+        ]);
+      }
+    }
   }
 );
 
-const UserModel = model(DOCUMENT_NAME, UserSchema);
+UserSchema.index({ name: 'text', alias: 'text' });
 
-class User {
-  static async getUsers() {
-    return UserModel.find().lean();
-  }
-  static async getUserByEmail(email: string) {
-    return await UserModel.findOne({ email }).select('+password').lean();
-  }
-  static async getUserByAlias(alias: string) {
-    return await UserModel.findOne({ alias }).lean();
-  }
-  static async getUserByID(id: string) {
-    return await UserModel.findById(id).lean();
-  }
-  static async createUser(values: Record<string, any>) {
-    return await UserModel.create(values);
-  }
-  static async deleteUser(id: string) {
-    return await UserModel.findByIdAndDelete(id).lean();
-  }
-  static async updateUser(id: string, values: Record<string, any>) {
-    return await UserModel.findByIdAndUpdate(id, values, { new: true }).lean();
-  }
-  static async getTopCreators() {
-    return await UserModel.aggregate([
-      // {
-      //   $lookup: {
-      //     from: 'posts',
-      //     let: { posts: '$posts' },
-      //     pipeline: [
-      //       { $match: { $expr: { $in: ['$_id', '$$posts'] } } },
-      //       { $project: getSelectData(selectPostArr) }
-      //     ],
-      //     as: 'posts'
-      //   }
-      // },
-      {
-        $project: {
-          ...getSelectData(selectUserArr),
-          postCount: { $size: '$posts' }
-        }
-      },
-      {
-        $sort: { postCount: -1 }
-      },
-      {
-        $limit: 12
-      }
-    ]);
-  }
-}
-
-export default User;
+export const UserModel = model(DOCUMENT_NAME, UserSchema);

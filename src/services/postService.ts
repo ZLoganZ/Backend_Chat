@@ -1,13 +1,13 @@
 import crypto from 'crypto';
 import { UploadApiResponse } from 'cloudinary';
 
-import Post from 'models/posts';
-import Save from 'models/saves';
+import { PostModel } from 'models/posts';
+import { SaveModel } from 'models/saves';
 import { BadRequest } from 'cores/error.response';
-import { INewPost, IUpdatePost } from 'types';
+import { FILTERS, INewPost, IUpdatePost } from 'types';
 import imageHandler from 'helpers/image';
-import { strToArr } from 'utils';
-import User from 'models/users';
+import { removeUndefinedFields, strToArr, updateNestedObject } from 'utils';
+import { UserModel } from 'models/users';
 
 class PostService {
   static async createPost(payload: INewPost) {
@@ -37,15 +37,15 @@ class PostService {
         .end(payload.image.buffer);
     });
 
-    const post = await Post.createPost({ ...payload, image: uploadedImage.public_id, tags });
+    const post = await PostModel.createPost({ ...payload, image: uploadedImage.public_id, tags });
 
-    await User.updateUser(payload.creator, { $push: { posts: post._id } });
+    await UserModel.updateUser(payload.creator, { $push: { posts: post._id } });
 
     return post;
   }
   static async updatePost(payload: IUpdatePost) {
     if (!payload.content) throw new BadRequest('Content is required');
-    if (!payload.postID) throw new BadRequest('Post ID is required');
+    if (!payload.postID) throw new BadRequest('PostModel ID is required');
 
     let tags: string[] = [];
     let image: string | undefined;
@@ -71,9 +71,9 @@ class PostService {
           .end(payload.image.buffer);
       });
 
-      const post = await Post.getPostByID(payload.postID);
+      const post = await PostModel.getPostByID(payload.postID);
 
-      if (!post) throw new BadRequest('Post not found');
+      if (!post) throw new BadRequest('PostModel not found');
 
       imageHandler.destroy(post.image);
 
@@ -81,60 +81,83 @@ class PostService {
     }
 
     delete payload.image;
-    return await Post.updatePost(payload.postID, { ...payload, tags, image });
+    return await PostModel.updatePost(
+      payload.postID,
+      updateNestedObject(removeUndefinedFields({ ...payload, tags, image }))
+    );
   }
   static async deletePost(postID: string) {
-    const post = await Post.deletePost(postID);
+    const post = await PostModel.deletePost(postID);
 
-    await User.updateUser(post.creator as string, { $pull: { posts: postID } });
+    await UserModel.updateUser(post.creator, { $pull: { posts: postID } });
     post.image && imageHandler.destroy(post.image);
-    post.saves && Save.deleteMany({ post: postID });
+    post.saves && SaveModel.deleteSaves({ post: postID });
 
     return post;
   }
   static async getPosts(page: string) {
-    return await Post.getPosts(page);
+    return await PostModel.getPosts(page);
   }
   static async getPost(postID: string) {
-    return await Post.getPostByID(postID);
+    return await PostModel.getPostByID(postID);
   }
-  static async likePost(postID: string, userID: string) {
-    const post = await Post.getPostByID(postID);
-    if (!post) throw new BadRequest('Post not found');
+  static async likePost(payload: { postID: string; userID: string }) {
+    const { postID, userID } = payload;
 
-    const isLiked = post.likes.some((like: any) => like._id.toString() === userID);
+    const post = await PostModel.getPostByID(postID);
+    if (!post) throw new BadRequest('PostModel not found');
+
+    const isLiked = post.likes.some((like) => like._id.toString() === userID);
 
     if (isLiked) {
-      await Post.unlikePost(postID, userID);
+      await PostModel.unlikePost(postID, userID);
     } else {
-      await Post.likePost(postID, userID);
+      await PostModel.likePost(postID, userID);
     }
     return { postID, isLiked: !isLiked };
   }
-  static async savePost(postID: string, userID: string) {
-    const saved = await Save.getSaveByPostIDAndUserID(postID, userID);
+  static async savePost(payload: { postID: string; userID: string }) {
+    const { postID, userID } = payload;
+
+    const saved = await SaveModel.getSaveByPostIDAndUserID(postID, userID);
     if (saved) {
-      await Post.updatePost(postID, { $pull: { saves: saved._id } });
-      await Save.deleteSave(saved._id.toString());
+      await PostModel.updatePost(postID, { $pull: { saves: saved._id } });
+      await SaveModel.deleteSave(saved._id.toString());
     } else {
-      const saved = await Save.createSave({ post: postID, user: userID });
-      await Post.updatePost(postID, { $push: { saves: saved.id } });
+      const saved = await SaveModel.createSave({ post: postID, user: userID });
+      await PostModel.updatePost(postID, { $push: { saves: saved.id } });
     }
     return { postID, saved: !saved };
   }
-  static async searchPosts(query: string) {
-    return await Post.searchPosts(query);
+  static async searchPosts(payload: { query: string; filter: FILTERS }) {
+    const { query, filter = 'All' } = payload;
+
+    return await PostModel.searchPosts(query, filter);
   }
-  static async getPostsByUserID(userID: string, page: string) {
-    return await Post.getPostsByUserID(userID, page);
+  static async getPostsByUserID(payload: { userID: string; page: string }) {
+    const { userID, page } = payload;
+
+    return await PostModel.getPostsByUserID(userID, page);
   }
-  static async getSavedPostsByUserID(userID: string, page: string) {
-    const savedPosts = await Save.getSaveByUserID(userID, page);
+  static async getSavedPostsByUserID(payload: { userID: string; page: string }) {
+    const { userID, page } = payload;
+
+    const savedPosts = await SaveModel.getSaveByUserID(userID, page);
     const posts = savedPosts.map((savedPost) => savedPost.post);
     return posts;
   }
-  static async getLikedPostsByUserID(userID: string, page: string) {
-    return await Post.getLikedPostsByUserID(userID, page);
+  static async getLikedPostsByUserID(payload: { userID: string; page: string }) {
+    const { userID, page } = payload;
+
+    return await PostModel.getLikedPostsByUserID(userID, page);
+  }
+  static async getTopPosts(payload: { page: string; filter: FILTERS }) {
+    const { page, filter = 'All' } = payload;
+
+    return await PostModel.getTopPosts(page, filter);
+  }
+  static async getRelatedPostsByPostID(postID: string) {
+    return await PostModel.getRelatedPostsByPostID(postID);
   }
 }
 
