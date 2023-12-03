@@ -110,9 +110,9 @@ class PostService {
     const isLiked = post.likes.some((like) => like._id.toString() === userID);
 
     if (isLiked) {
-      await PostModel.unlikePost(postID, userID);
+      await PostModel.updatePost(postID, { $pull: { likes: userID } });
     } else {
-      await PostModel.likePost(postID, userID);
+      await PostModel.updatePost(postID, { $push: { likes: userID } });
     }
     return { postID, isLiked: !isLiked };
   }

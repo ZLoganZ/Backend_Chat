@@ -1,26 +1,30 @@
 import { Schema, model, Types } from 'mongoose';
+
 import { FILTERS, IPost, IUser } from 'types';
 import { selectPostObj, selectUserPopulate, selectUserPopulateObj } from 'utils/constants';
+import { UserModel } from './users';
 
 const DOCUMENT_NAME = 'Post';
 const COLLECTION_NAME = 'posts';
+
+const ObjectId = Schema.Types.ObjectId;
 
 const PostSchema = new Schema(
   {
     content: { type: String, required: true },
     creator: {
-      type: Schema.Types.ObjectId,
+      type: ObjectId,
       ref: 'User',
       index: true,
       required: true
     },
     likes: {
-      type: [Schema.Types.ObjectId],
+      type: [ObjectId],
       ref: 'User',
       default: []
     },
     saves: {
-      type: [Schema.Types.ObjectId],
+      type: [ObjectId],
       ref: 'Save',
       default: []
     },
@@ -81,11 +85,11 @@ const PostSchema = new Schema(
               savesCount: { $size: '$saves' }
             }
           },
+          { $skip: skip },
+          { $limit: limit },
           {
             $sort: { likesCount: -1, savesCount: -1 }
           },
-          { $skip: skip },
-          { $limit: limit },
           {
             $lookup: {
               from: 'users',
@@ -152,30 +156,23 @@ const PostSchema = new Schema(
           .lean();
       },
       async createPost(values: Record<string, any>) {
-        return await (
+        const post = await (
           await this.create(values)
-        ).populate<{ creator: IUser }>({
-          path: 'creator',
-          select: selectUserPopulate
-        });
+        ).populate<{ creator: IUser }>({ path: 'creator', select: selectUserPopulate });
+
+        await UserModel.findByIdAndUpdate(values.creator, { $push: { posts: post._id } });
+
+        return post;
       },
       async deletePost(id: string | Types.ObjectId) {
-        return await this.findByIdAndDelete(id).lean();
+        const post = await this.findByIdAndDelete(id).lean();
+
+        await UserModel.findByIdAndUpdate(post.creator, { $pull: { posts: post._id } });
+
+        return post;
       },
       async updatePost(id: string | Types.ObjectId, values: Record<string, any>) {
         return await this.findByIdAndUpdate(id, values, { new: true }).lean();
-      },
-      async likePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
-        return await this.findByIdAndUpdate(id, { $push: { likes: userID } }, { new: true }).lean();
-      },
-      async savePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
-        return await this.findByIdAndUpdate(id, { $push: { saves: userID } }, { new: true }).lean();
-      },
-      async unlikePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
-        return await this.findByIdAndUpdate(id, { $pull: { likes: userID } }, { new: true }).lean();
-      },
-      async unsavePost(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
-        return await this.findByIdAndUpdate(id, { $pull: { saves: userID } }, { new: true }).lean();
       },
       async searchPosts(query: string, filter: FILTERS = 'All') {
         return await this.find({ $text: { $search: query } })

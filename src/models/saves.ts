@@ -1,20 +1,23 @@
 import { Schema, model, Types } from 'mongoose';
+
 import { IUser } from 'types';
 import { selectUserPopulate } from 'utils/constants';
 
 const DOCUMENT_NAME = 'Save';
 const COLLECTION_NAME = 'saves';
 
+const ObjectId = Schema.Types.ObjectId;
+
 const SaveSchema = new Schema(
   {
     user: {
-      type: Schema.Types.ObjectId,
+      type: ObjectId,
       ref: 'User',
       index: true,
       required: true
     },
     post: {
-      type: Schema.Types.ObjectId,
+      type: ObjectId,
       ref: 'Post',
       required: true
     }

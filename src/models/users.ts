@@ -1,10 +1,12 @@
 import { Schema, model, Types } from 'mongoose';
 import { IUser } from 'types';
 import { getSelectData } from 'utils';
-import { selectPostArr, selectUserArr } from 'utils/constants';
+import { selectUserArr } from 'utils/constants';
 
 const DOCUMENT_NAME = 'User';
 const COLLECTION_NAME = 'users';
+
+const ObjectId = Schema.Types.ObjectId;
 
 const UserSchema = new Schema(
   {
@@ -12,17 +14,17 @@ const UserSchema = new Schema(
     email: { type: String, required: true, index: true, unique: true },
     password: { type: String, required: true, select: false },
     posts: {
-      type: [Schema.Types.ObjectId],
+      type: [ObjectId],
       ref: 'Post',
       default: []
     },
     followers: {
-      type: [Schema.Types.ObjectId],
+      type: [ObjectId],
       ref: 'User',
       default: []
     },
     following: {
-      type: [Schema.Types.ObjectId],
+      type: [ObjectId],
       ref: 'User',
       default: []
     },
@@ -92,15 +94,6 @@ const UserSchema = new Schema(
           },
           {
             $limit: 12
-          },
-          {
-            $lookup: {
-              from: 'posts',
-              localField: 'posts',
-              foreignField: '_id',
-              pipeline: [{ $project: getSelectData(selectPostArr) }],
-              as: 'posts'
-            }
           }
         ]);
       }

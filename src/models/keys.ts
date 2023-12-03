@@ -3,10 +3,12 @@ import { Schema, Types, model } from 'mongoose';
 const DOCUMENT_NAME = 'Key';
 const COLLECTION_NAME = 'keys';
 
+const ObjectId = Schema.Types.ObjectId;
+
 const KeyTokenSchema = new Schema(
   {
     user: {
-      type: Schema.Types.ObjectId,
+      type: ObjectId,
       ref: 'User',
       index: true,
       required: true
@@ -20,7 +22,8 @@ const KeyTokenSchema = new Schema(
       required: true
     },
     refreshTokensUsed: {
-      type: Array,
+      type: [String],
+      index: true,
       default: []
     },
     refreshToken: {

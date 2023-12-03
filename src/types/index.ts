@@ -17,7 +17,9 @@ export interface IUser {
   alias: string;
   image: string;
   bio: string;
-  posts: IPost[];
+  posts: string[];
+  followers: IUser[];
+  following: IUser[];
   createdAt: Date;
   updatedAt: Date;
 }
