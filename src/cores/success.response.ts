@@ -1,7 +1,7 @@
 import { Response } from 'express';
 
-import { statusCodes } from 'utils/statusCodes';
-import { reasonPhrases } from 'utils/reasonPhrases';
+import { statusCodes } from 'libs/response/statusCodes';
+import { reasonPhrases } from 'libs/response/reasonPhrases';
 
 class SuccessResponse {
   public code: number;

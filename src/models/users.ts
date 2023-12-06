@@ -1,7 +1,7 @@
 import { Schema, model, Types } from 'mongoose';
 import { IUser } from 'types';
-import { getSelectData } from 'utils';
-import { selectUserArr } from 'utils/constants';
+import { getSelectData } from 'libs/utils';
+import { selectUserArr } from 'libs/constants';
 
 const DOCUMENT_NAME = 'User';
 const COLLECTION_NAME = 'users';
@@ -81,7 +81,10 @@ const UserSchema = new Schema(
       async updateUser(id: string | Types.ObjectId, values: Record<string, any>) {
         return await this.findByIdAndUpdate(id, values, { new: true }).lean();
       },
-      async getTopCreators() {
+      async getTopCreators(page: string) {
+        const limit = 12;
+        const skip = parseInt(page) * limit;
+
         return await this.aggregate<IUser>([
           {
             $project: {
@@ -89,12 +92,9 @@ const UserSchema = new Schema(
               postCount: { $size: '$posts' }
             }
           },
-          {
-            $sort: { postCount: -1 }
-          },
-          {
-            $limit: 12
-          }
+          { $sort: { postCount: -1 } },
+          { $skip: skip },
+          { $limit: 12 }
         ]);
       }
     }

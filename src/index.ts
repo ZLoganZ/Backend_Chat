@@ -10,7 +10,7 @@ import compression from 'compression';
 import routers from 'routers';
 import { CustomError } from 'types';
 import connectDB from 'configs/initDB';
-import { SenderMailServer } from 'configs/email_config';
+import { MailSenderServer } from 'libs/mail_sender';
 
 const app = express();
 
@@ -23,7 +23,7 @@ app.use(
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(compression());
-app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -43,7 +43,7 @@ app.use((error: CustomError, _: express.Request, res: express.Response, __: expr
 });
 
 connectDB();
-SenderMailServer();
+MailSenderServer();
 
 const server = http.createServer(app);
 

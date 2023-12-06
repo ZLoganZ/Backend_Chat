@@ -62,6 +62,18 @@ export interface IUpdatePost {
   tags?: string;
 }
 
+export interface IComment {
+  _id: string;
+  content: string;
+  user: IUser;
+  post: IPost;
+  likes: IUser[];
+  isChild: boolean;
+  replies: IComment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class CustomError extends Error {
   code: number;
 

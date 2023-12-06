@@ -1,5 +1,5 @@
-import { statusCodes } from 'utils/statusCodes';
-import { reasonPhrases } from 'utils/reasonPhrases';
+import { statusCodes } from 'libs/response/statusCodes';
+import { reasonPhrases } from 'libs/response/reasonPhrases';
 
 class ErrorResponse extends Error {
   public code: number;

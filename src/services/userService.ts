@@ -6,20 +6,26 @@ import imageHandler from 'helpers/image';
 import { BadRequest } from 'cores/error.response';
 import { UserModel } from 'models/users';
 import { IUpdateUser } from 'types';
-import { getInfoData, removeUndefinedFields, updateNestedObject } from 'utils';
-import { selectUserArr } from 'utils/constants';
+import { getInfoData, removeUndefinedFields, updateNestedObject } from 'libs/utils';
+import { selectUserArr } from 'libs/constants';
 
 class UserService {
-  static async getUserByID(userID: string) {
-    const user = await UserModel.getUserByID(userID);
+  static async getUser(userIDorAlias: string) {
+    let user;
+
+    if (Types.ObjectId.isValid(userIDorAlias)) {
+      user = await UserModel.getUserByID(userIDorAlias);
+    } else {
+      user = await UserModel.getUserByAlias(userIDorAlias);
+    }
 
     return getInfoData({
       fields: selectUserArr,
       object: user
     });
   }
-  static async getTopCreators() {
-    return await UserModel.getTopCreators();
+  static async getTopCreators(page: string) {
+    return await UserModel.getTopCreators(page);
   }
   static async updateUser(payload: { userID: string; updateUser: IUpdateUser }) {
     const { userID, updateUser } = payload;
@@ -33,23 +39,24 @@ class UserService {
     }
 
     if (updateUser.isChangeImage && updateUser.image) {
-      const uploadedImage: UploadApiResponse = await new Promise((resolve) => {
-        imageHandler
-          .unsigned_upload_stream(
-            process.env.CLOUDINARY_PRESET as string,
-            {
-              folder: 'instafram/users',
-              public_id: updateUser.image.originalname + '_' + crypto.randomBytes(8).toString('hex')
-            },
-            (error, result) => {
-              if (error) throw new BadRequest(error.message);
-              resolve(result);
-            }
-          )
-          .end(updateUser.image.buffer);
-      });
-
-      const user = await UserModel.getUserByID(userID);
+      const [uploadedImage, user] = await Promise.all([
+        new Promise<UploadApiResponse>((resolve) => {
+          imageHandler
+            .unsigned_upload_stream(
+              process.env.CLOUDINARY_PRESET,
+              {
+                folder: 'instafram/users',
+                public_id: updateUser.image.originalname + '_' + crypto.randomBytes(8).toString('hex')
+              },
+              (error, result) => {
+                if (error) throw new BadRequest(error.message);
+                resolve(result as UploadApiResponse);
+              }
+            )
+            .end(updateUser.image.buffer);
+        }),
+        UserModel.getUserByID(userID)
+      ]);
 
       if (!user) throw new BadRequest('UserModel is not exist');
 
@@ -76,11 +83,15 @@ class UserService {
     if (!followUser) throw new BadRequest('Follow user is not exist');
 
     if (user.following.some((id) => id.toString() === followID)) {
-      await UserModel.updateUser(userID, { $pull: { following: followID } });
-      await UserModel.updateUser(followID, { $pull: { followers: userID } });
+      await Promise.all([
+        UserModel.updateUser(userID, { $pull: { following: followID } }),
+        UserModel.updateUser(followID, { $pull: { followers: userID } })
+      ]);
     } else {
-      await UserModel.updateUser(userID, { $push: { following: followID } });
-      await UserModel.updateUser(followID, { $push: { followers: userID } });
+      await Promise.all([
+        UserModel.updateUser(userID, { $push: { following: followID } }),
+        UserModel.updateUser(followID, { $push: { followers: userID } })
+      ]);
     }
 
     return await UserModel.getUserByID(userID);

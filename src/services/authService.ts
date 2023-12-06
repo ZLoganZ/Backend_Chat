@@ -4,9 +4,9 @@ import crypto from 'crypto';
 import { UserModel } from 'models/users';
 import { KeyModel } from 'models/keys';
 import { BadRequest, Unauthorized } from 'cores/error.response';
-import { hash, compare, createTokenPair, getInfoData } from 'utils';
-import { sendMailVerifyEmail } from 'configs/email_config';
-import { selectUserArr } from 'utils/constants';
+import { hash, compare, createTokenPair, getInfoData } from 'libs/utils';
+import { sendMailVerifyEmail } from 'libs/mail_sender';
+import { selectUserArr } from 'libs/constants';
 
 interface Cache {
   email: string;
@@ -95,7 +95,7 @@ class AuthService {
     });
 
     // Generate token pair
-    const tokens = createTokenPair({ id: user._id, email: user.email }, publicKey, privateKey);
+    const tokens = createTokenPair({ _id: user._id, email: user.email }, publicKey, privateKey);
 
     // Save token pair
     const key = await KeyModel.createKeyToken(
@@ -106,8 +106,8 @@ class AuthService {
     );
     if (!key) throw new BadRequest('Something went wrong');
 
-    res.cookie('refreshToken', tokens.refreshToken);
-    res.cookie('accessToken', tokens.accessToken);
+    res.cookie('refreshToken', tokens.refreshToken, { signed: true });
+    res.cookie('accessToken', tokens.accessToken, { signed: true });
 
     // Return token pair
     return {
@@ -154,7 +154,7 @@ class AuthService {
     });
 
     // Generate token pair
-    const tokens = createTokenPair({ id: newUser._id, email: newUser.email }, publicKey, privateKey);
+    const tokens = createTokenPair({ _id: newUser._id, email: newUser.email }, publicKey, privateKey);
 
     // Save token pair
     const key = await KeyModel.createKeyToken(
@@ -165,8 +165,8 @@ class AuthService {
     );
     if (!key) throw new BadRequest('Something went wrong');
 
-    res.cookie('refreshToken', tokens.refreshToken);
-    res.cookie('accessToken', tokens.accessToken);
+    res.cookie('refreshToken', tokens.refreshToken, { signed: true });
+    res.cookie('accessToken', tokens.accessToken, { signed: true });
 
     // Return token pair
     return {
@@ -177,7 +177,9 @@ class AuthService {
       tokens
     };
   }
-  static async logout(refreshToken: string) {
+  static async logout(payload: { refreshToken: string; res: Response }) {
+    const { refreshToken, res } = payload;
+
     // Check if refresh token is exist
     const key = await KeyModel.findByRefreshToken(refreshToken);
     if (!key) throw new BadRequest('Refresh token is not exist');
@@ -185,6 +187,9 @@ class AuthService {
     // Delete refresh token
     const deletedKey = await KeyModel.deleteKeyByID(key._id.toString());
     if (!deletedKey) throw new BadRequest('Something went wrong');
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
 
     // Return success message
     return { logout: true };

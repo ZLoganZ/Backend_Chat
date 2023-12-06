@@ -5,11 +5,14 @@ import UserService from 'services/userService';
 import { RequestWithUser } from 'types';
 
 class UserController {
-  static async getUserByID(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Get user by id successfully', await UserService.getUserByID(req.params.userID)).send(res);
+  static async getUser(req: RequestWithUser, res: Response, _: NextFunction) {
+    new Ok('Get user successfully', await UserService.getUser(req.params.userIDorAlias)).send(res);
   }
   static async getTopCreators(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Get popular users successfully', await UserService.getTopCreators()).send(res);
+    new Ok(
+      'Get popular users successfully',
+      await UserService.getTopCreators(req.query.page.toString())
+    ).send(res);
   }
   static async updateUser(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(

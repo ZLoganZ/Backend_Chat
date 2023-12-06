@@ -1,7 +1,7 @@
 import { Schema, model, Types } from 'mongoose';
 
 import { IUser } from 'types';
-import { selectUserPopulate } from 'utils/constants';
+import { selectUserPopulate } from 'libs/constants';
 
 const DOCUMENT_NAME = 'Save';
 const COLLECTION_NAME = 'saves';
@@ -57,7 +57,7 @@ const SaveSchema = new Schema(
           })
           .lean();
       },
-      async getSaveByUserID(userID: string | Types.ObjectId, page: string) {
+      async getSavedPostsByUserID(userID: string | Types.ObjectId, page: string) {
         const limit = 12;
         const skip = parseInt(page) * limit;
         return await this.find({ user: userID })

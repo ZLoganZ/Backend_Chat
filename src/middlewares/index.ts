@@ -2,24 +2,45 @@ import { merge } from 'lodash';
 import path from 'path';
 import { Response, NextFunction } from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
 
 import { UserModel } from 'models/users';
 import { KeyModel } from 'models/keys';
 import { RequestWithUser } from 'types';
 import { NotFound, Unauthorized } from 'cores/error.response';
+import { HEADER } from 'libs/constants';
+import { asyncHandler } from 'libs/utils';
 
-export const Authentication = async (req: RequestWithUser, _: Response, next: NextFunction) => {
+export const Authentication = asyncHandler(async (req: RequestWithUser, _: Response, next: NextFunction) => {
   try {
-    const accessToken = req.cookies.accessToken as string;
-    const refreshToken = req.cookies.refreshToken as string;
-    if (!accessToken || !refreshToken) throw new NotFound('Token is not found');
+    const userID = req.headers[HEADER.CLIENT_ID];
+    if (!userID) throw new Unauthorized('User is not found');
 
-    const key = await KeyModel.findByRefreshToken(refreshToken);
-    if (!key) throw new Unauthorized('Token is not exist');
+    const keyStore = await KeyModel.findByUserID(userID.toString());
+    if (!keyStore) throw new Unauthorized('User is not exist');
 
-    const currentUser = await UserModel.getUserByID(key.user as unknown as string);
+    const accessToken = req.signedCookies.accessToken as string;
+    const refreshToken = req.signedCookies.refreshToken as string;
+    if (!accessToken || !refreshToken) throw new Unauthorized('Token is not found');
 
-    const user = { user: { ...currentUser, accessToken, refreshToken, _id: currentUser._id.toString() } };
+    let decode: jwt.JwtPayload;
+
+    jwt.verify(accessToken, keyStore.publicKey, (err, decoded) => {
+      if (err?.message.includes('expired')) {
+        jwt.verify(refreshToken, keyStore.privateKey, (err, decoded) => {
+          if (err?.message.includes('expired')) throw new Unauthorized('Token is expired');
+          if (err) throw new Unauthorized('Token is invalid');
+
+          decode = decoded as jwt.JwtPayload;
+        });
+      } else {
+        if (err) throw new Unauthorized('Token is invalid');
+        
+        decode = decoded as jwt.JwtPayload;
+      }
+    });
+
+    const user = { user: { accessToken, refreshToken, ...decode } };
 
     merge(req, user);
 
@@ -27,7 +48,7 @@ export const Authentication = async (req: RequestWithUser, _: Response, next: Ne
   } catch (error) {
     return next(error);
   }
-};
+});
 
 export const upload = multer({
   storage: multer.memoryStorage(),

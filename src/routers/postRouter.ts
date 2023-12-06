@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { asyncHandler } from 'utils';
+import { asyncHandler } from 'libs/utils';
 
 import PostController from 'controllers/postController';
 import { upload } from 'middlewares';

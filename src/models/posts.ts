@@ -1,7 +1,7 @@
 import { Schema, model, Types } from 'mongoose';
 
 import { FILTERS, IPost, IUser } from 'types';
-import { selectPostObj, selectUserPopulate, selectUserPopulateObj } from 'utils/constants';
+import { selectPostObj, selectUserPopulate, selectUserPopulateObj } from 'libs/constants';
 import { UserModel } from './users';
 
 const DOCUMENT_NAME = 'Post';
@@ -21,6 +21,11 @@ const PostSchema = new Schema(
     likes: {
       type: [ObjectId],
       ref: 'User',
+      default: []
+    },
+    comments: {
+      type: [ObjectId],
+      ref: 'Comment',
       default: []
     },
     saves: {
@@ -49,6 +54,7 @@ const PostSchema = new Schema(
         const limit = 12;
         const skip = parseInt(page) * limit;
         return await this.find()
+          .sort({ [sort]: -1 })
           .skip(skip)
           .limit(limit)
           .populate<{ creator: IUser }>({
@@ -70,7 +76,6 @@ const PostSchema = new Schema(
             ]
           })
           .select('-__v -updatedAt')
-          .sort({ [sort]: -1 })
           .lean();
       },
       async getTopPosts(page: string, filter: FILTERS = 'All') {
@@ -85,11 +90,9 @@ const PostSchema = new Schema(
               savesCount: { $size: '$saves' }
             }
           },
+          { $sort: { likesCount: -1, savesCount: -1 } },
           { $skip: skip },
           { $limit: limit },
-          {
-            $sort: { likesCount: -1, savesCount: -1 }
-          },
           {
             $lookup: {
               from: 'users',
@@ -201,6 +204,7 @@ const PostSchema = new Schema(
         const limit = 12;
         const skip = parseInt(page) * limit;
         return await this.find({ creator: userID })
+          .sort({ [sort]: -1 })
           .skip(skip)
           .limit(limit)
           .populate<{ creator: IUser }>({
@@ -222,13 +226,14 @@ const PostSchema = new Schema(
             ]
           })
           .select('-__v -updatedAt')
-          .sort({ [sort]: -1 })
           .lean();
       },
       async getLikedPostsByUserID(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
         const limit = 12;
         const skip = parseInt(page) * limit;
+
         return await this.find({ likes: { $in: userID } })
+          .sort({ [sort]: -1 })
           .skip(skip)
           .limit(limit)
           .populate<{ creator: IUser }>({
@@ -250,7 +255,6 @@ const PostSchema = new Schema(
             ]
           })
           .select('-__v -updatedAt')
-          .sort({ [sort]: -1 })
           .lean();
       },
       async getRelatedPostsByPostID(postID: string | Types.ObjectId) {

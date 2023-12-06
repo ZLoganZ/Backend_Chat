@@ -21,7 +21,7 @@ const SendMail = (msg: Mail.Options) => {
   });
 };
 
-const SenderMailServer = () => {
+const MailSenderServer = () => {
   transporter.verify((error) => {
     if (error) {
       console.log(error);
@@ -107,4 +107,4 @@ const sendMailVerifyEmail = (email: string, code: string) => {
   return SendMail(msg);
 };
 
-export { SenderMailServer, sendMailForgotPassword, sendMailVerifyEmail };
+export { MailSenderServer, sendMailForgotPassword, sendMailVerifyEmail };

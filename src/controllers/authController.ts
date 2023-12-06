@@ -20,7 +20,10 @@ class AuthController {
     new Created('Register successfully', await AuthService.register({ ...req.body, res })).send(res);
   }
   static async logout(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Accepted('Logout successfully', await AuthService.logout(req.user.refreshToken)).send(res);
+    new Accepted(
+      'Logout successfully',
+      await AuthService.logout({ refreshToken: req.user.refreshToken, res })
+    ).send(res);
   }
   static async me(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok('Get user successfully', await AuthService.me(req.user._id)).send(res);

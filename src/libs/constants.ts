@@ -31,3 +31,6 @@ export const selectPostObj = {
   location: 1,
   createdAt: 1
 };
+export enum HEADER {
+  CLIENT_ID = 'x-client-id',
+}

@@ -1,13 +1,14 @@
 import crypto from 'crypto';
 import { UploadApiResponse } from 'cloudinary';
+import { Types } from 'mongoose';
 
 import { PostModel } from 'models/posts';
 import { SaveModel } from 'models/saves';
+import { UserModel } from 'models/users';
 import { BadRequest } from 'cores/error.response';
 import { FILTERS, INewPost, IUpdatePost } from 'types';
 import imageHandler from 'helpers/image';
-import { removeUndefinedFields, strToArr, updateNestedObject } from 'utils';
-import { UserModel } from 'models/users';
+import { removeUndefinedFields, strToArr, updateNestedObject } from 'libs/utils';
 
 class PostService {
   static async createPost(payload: INewPost) {
@@ -15,16 +16,12 @@ class PostService {
     if (!payload.creator) throw new BadRequest('Creator is required');
     if (!payload.image) throw new BadRequest('Image is required');
 
-    let tags: string[] = [];
-
-    if (payload.tags) {
-      tags = strToArr(payload.tags);
-    }
+    const tags = strToArr(payload.tags);
 
     const uploadedImage: UploadApiResponse = await new Promise((resolve) => {
       imageHandler
         .unsigned_upload_stream(
-          process.env.CLOUDINARY_PRESET as string,
+          process.env.CLOUDINARY_PRESET,
           {
             folder: 'instafram/posts',
             public_id: payload.image.originalname + '_' + crypto.randomBytes(8).toString('hex')
@@ -47,31 +44,28 @@ class PostService {
     if (!payload.content) throw new BadRequest('Content is required');
     if (!payload.postID) throw new BadRequest('PostModel ID is required');
 
-    let tags: string[] = [];
     let image: string | undefined;
-
-    if (payload.tags) {
-      tags = strToArr(payload.tags);
-    }
+    const tags = strToArr(payload.tags);
 
     if (payload.isChangeImage && payload.image) {
-      const uploadedImage: UploadApiResponse = await new Promise((resolve) => {
-        imageHandler
-          .unsigned_upload_stream(
-            process.env.CLOUDINARY_PRESET as string,
-            {
-              folder: 'instafram/posts',
-              public_id: payload.image.originalname + '_' + crypto.randomBytes(8).toString('hex')
-            },
-            (error, result) => {
-              if (error) throw new BadRequest(error.message);
-              resolve(result);
-            }
-          )
-          .end(payload.image.buffer);
-      });
-
-      const post = await PostModel.getPostByID(payload.postID);
+      const [uploadedImage, post] = await Promise.all([
+        new Promise<UploadApiResponse>((resolve) => {
+          imageHandler
+            .unsigned_upload_stream(
+              process.env.CLOUDINARY_PRESET,
+              {
+                folder: 'instafram/posts',
+                public_id: payload.image.originalname + '_' + crypto.randomBytes(8).toString('hex')
+              },
+              (error, result) => {
+                if (error) throw new BadRequest(error.message);
+                resolve(result as UploadApiResponse);
+              }
+            )
+            .end(payload.image.buffer);
+        }),
+        PostModel.getPostByID(payload.postID)
+      ]);
 
       if (!post) throw new BadRequest('PostModel not found');
 
@@ -137,19 +131,38 @@ class PostService {
   static async getPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    return await PostModel.getPostsByUserID(userID, page);
+    if (Types.ObjectId.isValid(userID)) {
+      return await PostModel.getPostsByUserID(userID, page);
+    } else {
+      const user = await UserModel.getUserByAlias(userID);
+      if (!user) throw new BadRequest('UserModel not found');
+
+      return await PostModel.getPostsByUserID(user._id, page);
+    }
   }
   static async getSavedPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    const savedPosts = await SaveModel.getSaveByUserID(userID, page);
-    const posts = savedPosts.map((savedPost) => savedPost.post);
-    return posts;
+    if (Types.ObjectId.isValid(userID)) {
+      return (await SaveModel.getSavedPostsByUserID(userID, page)).map((savedPost) => savedPost.post);
+    } else {
+      const user = await UserModel.getUserByAlias(userID);
+      if (!user) throw new BadRequest('UserModel not found');
+
+      return (await SaveModel.getSavedPostsByUserID(user._id, page)).map((savedPost) => savedPost.post);
+    }
   }
   static async getLikedPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    return await PostModel.getLikedPostsByUserID(userID, page);
+    if (Types.ObjectId.isValid(userID)) {
+      return await PostModel.getLikedPostsByUserID(userID, page);
+    } else {
+      const user = await UserModel.getUserByAlias(userID);
+      if (!user) throw new BadRequest('UserModel not found');
+
+      return await PostModel.getLikedPostsByUserID(user._id, page);
+    }
   }
   static async getTopPosts(payload: { page: string; filter: FILTERS }) {
     const { page, filter = 'All' } = payload;
