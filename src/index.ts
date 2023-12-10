@@ -27,8 +27,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Set header
 app.use((_, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Cache-Control', 's-max-age=1, stale-while-revalidate');
   next();
 });
