@@ -2,13 +2,13 @@ import crypto from 'crypto';
 import { UploadApiResponse } from 'cloudinary';
 import { Types } from 'mongoose';
 
-import { PostModel } from 'models/posts';
-import { SaveModel } from 'models/saves';
-import { UserModel } from 'models/users';
-import { BadRequest } from 'cores/error.response';
-import { FILTERS, INewPost, IUpdatePost } from 'types';
-import imageHandler from 'helpers/image';
-import { removeUndefinedFields, strToArr, updateNestedObject } from 'libs/utils';
+import { PostModel } from '../models/posts';
+import { SaveModel } from '../models/saves';
+import { UserModel } from '../models/users';
+import { BadRequest } from '../cores/error.response';
+import { FILTERS, INewPost, IUpdatePost } from '../types';
+import imageHandler from '../helpers/image';
+import { removeUndefinedFields, strToArr, updateNestedObject } from '../libs/utils';
 
 class PostService {
   static async createPost(payload: INewPost) {

@@ -4,12 +4,11 @@ import { Response, NextFunction } from 'express';
 import multer from 'multer';
 import jwt from 'jsonwebtoken';
 
-import { UserModel } from 'models/users';
-import { KeyModel } from 'models/keys';
-import { RequestWithUser } from 'types';
-import { NotFound, Unauthorized } from 'cores/error.response';
-import { HEADER } from 'libs/constants';
-import { asyncHandler } from 'libs/utils';
+import { KeyModel } from '../models/keys';
+import { RequestWithUser } from '../types';
+import { Unauthorized } from '../cores/error.response';
+import { HEADER } from '../libs/constants';
+import { asyncHandler } from '../libs/utils';
 
 export const Authentication = asyncHandler(async (req: RequestWithUser, _: Response, next: NextFunction) => {
   try {
@@ -35,7 +34,7 @@ export const Authentication = asyncHandler(async (req: RequestWithUser, _: Respo
         });
       } else {
         if (err) throw new Unauthorized('Token is invalid');
-        
+
         decode = decoded as jwt.JwtPayload;
       }
     });

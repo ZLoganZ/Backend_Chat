@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
-import { asyncHandler } from 'libs/utils';
+import { asyncHandler } from '../libs/utils';
 
-import PostController from 'controllers/postController';
-import { upload } from 'middlewares';
+import PostController from '../controllers/postController';
+import { upload } from '../middlewares';
 
 const router = Router();
 

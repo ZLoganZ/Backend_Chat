@@ -1,7 +1,8 @@
 import { Schema, model, Types } from 'mongoose';
-import { IUser } from 'types';
-import { getSelectData } from 'libs/utils';
-import { selectUserArr } from 'libs/constants';
+
+import { IUser } from '../types';
+import { getSelectData } from '../libs/utils';
+import { selectUserArr } from '../libs/constants';
 
 const DOCUMENT_NAME = 'User';
 const COLLECTION_NAME = 'users';

@@ -1,12 +1,12 @@
 import { Response } from 'express';
 import crypto from 'crypto';
 
-import { UserModel } from 'models/users';
-import { KeyModel } from 'models/keys';
-import { BadRequest, Unauthorized } from 'cores/error.response';
-import { hash, compare, createTokenPair, getInfoData } from 'libs/utils';
-import { sendMailVerifyEmail } from 'libs/mail_sender';
-import { selectUserArr } from 'libs/constants';
+import { UserModel } from '../models/users';
+import { KeyModel } from '../models/keys';
+import { BadRequest, Unauthorized } from '../cores/error.response';
+import { hash, compare, createTokenPair, getInfoData } from '../libs/utils';
+import { sendMailVerifyEmail } from '../libs/mail_sender';
+import { selectUserArr } from '../libs/constants';
 
 interface Cache {
   email: string;

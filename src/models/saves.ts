@@ -1,7 +1,7 @@
 import { Schema, model, Types } from 'mongoose';
 
-import { IUser } from 'types';
-import { selectUserPopulate } from 'libs/constants';
+import { IUser } from '../types';
+import { selectUserPopulate } from '../libs/constants';
 
 const DOCUMENT_NAME = 'Save';
 const COLLECTION_NAME = 'saves';

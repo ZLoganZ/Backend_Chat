@@ -1,8 +1,8 @@
 import { Response, NextFunction } from 'express';
 
-import { Ok, Created, Accepted } from 'cores/success.response';
-import CommentService from 'services/commentService';
-import { RequestWithUser } from 'types';
+import { Ok, Created, Accepted } from '../cores/success.response';
+import CommentService from '../services/commentService';
+import { RequestWithUser } from '../types';
 
 class CommentController {
   static async createComment(req: RequestWithUser, res: Response, _: NextFunction) {

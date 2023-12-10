@@ -1,8 +1,8 @@
 import { Response, NextFunction } from 'express';
 
-import { Ok, Created, Accepted } from 'cores/success.response';
-import PostService from 'services/postService';
-import { FILTERS, RequestWithUser } from 'types';
+import { Ok, Created, Accepted } from '../cores/success.response';
+import PostService from '../services/postService';
+import { FILTERS, RequestWithUser } from '../types';
 
 class AuthController {
   static async createPost(req: RequestWithUser, res: Response, _: NextFunction) {

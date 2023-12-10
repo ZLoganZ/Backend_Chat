@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
-import { asyncHandler } from 'libs/utils';
-import CommentController from 'controllers/commentController';
+import { asyncHandler } from '../libs/utils';
+import CommentController from '../controllers/commentController';
 
 const router = Router();
 

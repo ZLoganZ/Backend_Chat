@@ -1,8 +1,8 @@
 import { Response, NextFunction } from 'express';
 
-import { Ok, Created, Accepted } from 'cores/success.response';
-import UserService from 'services/userService';
-import { RequestWithUser } from 'types';
+import { Ok, Created, Accepted } from '../cores/success.response';
+import UserService from '../services/userService';
+import { RequestWithUser } from '../types';
 
 class UserController {
   static async getUser(req: RequestWithUser, res: Response, _: NextFunction) {

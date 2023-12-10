@@ -3,9 +3,6 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "baseUrl": ".",
-    "paths": {
-      "*": ["./src/*"]
-    },
     "outDir": "dist",
     "target": "ESNext",
     "sourceMap": true,

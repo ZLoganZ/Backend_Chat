@@ -6,10 +6,10 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 
-import routers from 'routers';
-import { CustomError } from 'types';
-import connectDB from 'configs/initDB';
-import { MailSenderServer } from 'libs/mail_sender';
+import routers from './routers';
+import { CustomError } from './types';
+import connectDB from './configs/initDB';
+import { MailSenderServer } from './libs/mail_sender';
 
 const app = express();
 

@@ -1,8 +1,8 @@
 import { Router } from 'express';
 
-import { upload } from 'middlewares';
-import { asyncHandler } from 'libs/utils';
-import UserController from 'controllers/userController';
+import { upload } from '../middlewares';
+import { asyncHandler } from '../libs/utils';
+import UserController from '../controllers/userController';
 
 const router = Router();
 

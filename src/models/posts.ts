@@ -1,7 +1,7 @@
 import { Schema, model, Types } from 'mongoose';
 
-import { FILTERS, IPost, IUser } from 'types';
-import { selectPostObj, selectUserPopulate, selectUserPopulateObj } from 'libs/constants';
+import { FILTERS, IPost, IUser } from '../types';
+import { selectPostObj, selectUserPopulate, selectUserPopulateObj } from '../libs/constants';
 import { UserModel } from './users';
 
 const DOCUMENT_NAME = 'Post';

@@ -2,12 +2,12 @@ import { UploadApiResponse } from 'cloudinary';
 import { Types } from 'mongoose';
 import crypto from 'crypto';
 
-import imageHandler from 'helpers/image';
-import { BadRequest } from 'cores/error.response';
-import { UserModel } from 'models/users';
-import { IUpdateUser } from 'types';
-import { getInfoData, removeUndefinedFields, updateNestedObject } from 'libs/utils';
-import { selectUserArr } from 'libs/constants';
+import imageHandler from '../helpers/image';
+import { BadRequest } from '../cores/error.response';
+import { UserModel } from '../models/users';
+import { IUpdateUser } from '../types';
+import { getInfoData, removeUndefinedFields, updateNestedObject } from '../libs/utils';
+import { selectUserArr } from '../libs/constants';
 
 class UserService {
   static async getUser(userIDorAlias: string) {

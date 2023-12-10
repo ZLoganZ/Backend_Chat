@@ -1,6 +1,6 @@
-import { CommentModel } from 'models/comment';
-import { PostModel } from 'models/posts';
-import { BadRequest } from 'cores/error.response';
+import { CommentModel } from '../models/comment';
+import { PostModel } from '../models/posts';
+import { BadRequest } from '../cores/error.response';
 
 class CommentService {
   static async createComment(payload: { content: string; user: string; post: string; replyTo?: string }) {

@@ -4,7 +4,7 @@ import authRouter from './authRouter';
 import postRouter from './postRouter';
 import userRouter from './userRouter';
 import commentRouter from './commentRouter';
-import { Authentication } from 'middlewares';
+import { Authentication } from '../middlewares';
 
 const router = Router();
 

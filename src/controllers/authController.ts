@@ -1,8 +1,8 @@
 import { Response, NextFunction } from 'express';
 
-import { Ok, Created, Accepted } from 'cores/success.response';
-import AuthService from 'services/authService';
-import { RequestWithUser } from 'types';
+import { Ok, Created, Accepted } from '../cores/success.response';
+import AuthService from '../services/authService';
+import { RequestWithUser } from '../types';
 
 class AuthController {
   static async checkEmail(req: RequestWithUser, res: Response, _: NextFunction) {
