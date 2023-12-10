@@ -25,12 +25,6 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Set header
-app.use((_, res, next) => {
-  res.setHeader('Cache-Control', 's-max-age=1, stale-while-revalidate');
-  next();
-});
-
 app.use('/api/v1', routers);
 
 // handling error
