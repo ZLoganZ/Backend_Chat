@@ -41,6 +41,7 @@ app.use((error: CustomError, _: express.Request, res: express.Response, __: expr
 });
 
 connectDB();
+
 MailSenderServer();
 
 const server = http.createServer(app);
