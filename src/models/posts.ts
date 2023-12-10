@@ -68,12 +68,10 @@ const PostSchema = new Schema(
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
             select: '-_id -__v -post',
-            populate: [
-              {
-                path: 'user',
-                select: selectUserPopulate
-              }
-            ]
+            populate: {
+              path: 'user',
+              select: selectUserPopulate
+            }
           })
           .select('-__v -updatedAt')
           .lean();
@@ -148,12 +146,10 @@ const PostSchema = new Schema(
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
             select: '-_id -__v -post',
-            populate: [
-              {
-                path: 'user',
-                select: selectUserPopulate
-              }
-            ]
+            populate: {
+              path: 'user',
+              select: selectUserPopulate
+            }
           })
           .select('-__v -updatedAt')
           .lean();
@@ -190,12 +186,10 @@ const PostSchema = new Schema(
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
             select: '-_id -__v -post',
-            populate: [
-              {
-                path: 'user',
-                select: selectUserPopulate
-              }
-            ]
+            populate: {
+              path: 'user',
+              select: selectUserPopulate
+            }
           })
           .select('-__v -updatedAt')
           .lean();
@@ -218,12 +212,10 @@ const PostSchema = new Schema(
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
             select: '-_id -__v -post',
-            populate: [
-              {
-                path: 'user',
-                select: selectUserPopulate
-              }
-            ]
+            populate: {
+              path: 'user',
+              select: selectUserPopulate
+            }
           })
           .select('-__v -updatedAt')
           .lean();
@@ -247,12 +239,10 @@ const PostSchema = new Schema(
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
             select: '-_id -__v -post',
-            populate: [
-              {
-                path: 'user',
-                select: selectUserPopulate
-              }
-            ]
+            populate: {
+              path: 'user',
+              select: selectUserPopulate
+            }
           })
           .select('-__v -updatedAt')
           .lean();

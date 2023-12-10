@@ -1,6 +1,6 @@
-export const selectUser = '_id name email image alias posts followers following';
+export const selectUser = '_id name image bio alias posts followers following';
 export const selectUserArr = ['_id', 'name', 'image', 'bio', 'alias', 'posts', 'followers', 'following'];
-export const selectUserPopulate = '_id name email image alias';
+export const selectUserPopulate = '_id name image alias';
 export const selectUserPopulateArr = ['_id', 'name', 'image', 'alias'];
 export const selectUserPopulateObj = {
   _id: 1,
@@ -8,13 +8,14 @@ export const selectUserPopulateObj = {
   image: 1,
   alias: 1
 };
-export const selectPost = '_id content image creator likes saves tags location createdAt';
+export const selectPost = '_id content image creator likes comments saves tags location createdAt';
 export const selectPostArr = [
   '_id',
   'content',
   'image',
   'creator',
   'likes',
+  'comments',
   'saves',
   'tags',
   'location',
@@ -25,6 +26,7 @@ export const selectPostObj = {
   content: 1,
   creator: 1,
   likes: 1,
+  comments: 1,
   saves: 1,
   tags: 1,
   image: 1,
@@ -32,5 +34,5 @@ export const selectPostObj = {
   createdAt: 1
 };
 export enum HEADER {
-  CLIENT_ID = 'x-client-id',
+  CLIENT_ID = 'x-client-id'
 }

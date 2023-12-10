@@ -5,7 +5,6 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
-import compression from 'compression';
 
 import routers from 'routers';
 import { CustomError } from 'types';
@@ -22,7 +21,6 @@ app.use(
 );
 app.use(morgan('dev'));
 app.use(helmet());
-app.use(compression());
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

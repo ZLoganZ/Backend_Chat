@@ -69,7 +69,7 @@ export const strToArr = (str: string) => {
   const strArr = str
     .split(',')
     .map((item) => item.trim())
-    .filter((item) => item);
+    .filter(Boolean);
   strArr.forEach((item) => set.add(item));
   return Array.from(set);
 };
