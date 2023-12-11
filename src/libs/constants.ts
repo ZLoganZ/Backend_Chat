@@ -34,5 +34,8 @@ export const selectPostObj = {
   createdAt: 1
 };
 export enum HEADER {
-  CLIENT_ID = 'x-client-id'
+  CLIENT_ID = 'client-id',
+  ACCESSTOKEN = 'access-token',
+  REFRESHTOKEN = 'refresh-token',
+  GITHUB_TOKEN = 'github-token'
 }

@@ -106,9 +106,6 @@ class AuthService {
     );
     if (!key) throw new BadRequest('Something went wrong');
 
-    res.cookie('refreshToken', tokens.refreshToken, { signed: true });
-    res.cookie('accessToken', tokens.accessToken, { signed: true });
-
     // Return token pair
     return {
       user: getInfoData({
@@ -164,9 +161,6 @@ class AuthService {
       tokens.refreshToken
     );
     if (!key) throw new BadRequest('Something went wrong');
-
-    res.cookie('refreshToken', tokens.refreshToken, { signed: true });
-    res.cookie('accessToken', tokens.accessToken, { signed: true });
 
     // Return token pair
     return {

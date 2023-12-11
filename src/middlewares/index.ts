@@ -18,8 +18,9 @@ export const Authentication = asyncHandler(async (req: RequestWithUser, _: Respo
     const keyStore = await KeyModel.findByUserID(userID.toString());
     if (!keyStore) throw new Unauthorized('User is not exist');
 
-    const accessToken = req.signedCookies.accessToken as string;
-    const refreshToken = req.signedCookies.refreshToken as string;
+    const accessToken = req.headers[HEADER.ACCESSTOKEN] as string;
+    const refreshToken = req.headers[HEADER.REFRESHTOKEN] as string;
+
     if (!accessToken || !refreshToken) throw new Unauthorized('Token is not found');
 
     let decode: jwt.JwtPayload;

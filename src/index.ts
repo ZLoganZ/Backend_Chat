@@ -1,7 +1,6 @@
 require('dotenv').config();
 import express from 'express';
 import http from 'http';
-import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -21,7 +20,6 @@ app.use(
 );
 app.use(morgan('dev'));
 app.use(helmet());
-app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
