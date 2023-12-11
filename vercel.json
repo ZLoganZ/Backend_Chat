@@ -1,14 +1,16 @@
 {
+  "version": 2,
+  "name": "Instafram-API",
   "builds": [
     {
       "src": "src/index.ts",
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/v1/(.*)",
-      "destination": "/api/v1"
+      "source": "/(.*)",
+      "destination": "/src/index.ts"
     }
   ]
 }

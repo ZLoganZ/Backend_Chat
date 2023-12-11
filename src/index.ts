@@ -25,6 +25,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/v1', routers);
 
+app.get('/', (_, res) => {
+  res.send('Hello world');
+});
+
 // handling error
 app.use((_, __, next) => {
   const error = new CustomError('Not found route', 404);
