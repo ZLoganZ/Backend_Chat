@@ -5,7 +5,7 @@ import { UserModel } from '../models/users';
 import { KeyModel } from '../models/keys';
 import { BadRequest, Unauthorized } from '../cores/error.response';
 import { hash, compare, createTokenPair, getInfoData } from '../libs/utils';
-import { sendMailVerifyEmail } from '../libs/mail_sender';
+import { sendMailVerifyEmail,sendMailForgotPassword } from '../libs/mail_sender';
 import { selectUserArr } from '../libs/constants';
 
 interface Cache {
@@ -36,7 +36,7 @@ const storeCache = (email: string) => {
 };
 
 class AuthService {
-  static async checkEmail(email: string) {
+  static async checkEmailSignup(email: string) {
     // Check if email is exist
     const user = await UserModel.getUserByEmail(email);
     if (user) throw new BadRequest('Email is already exist');
@@ -53,7 +53,24 @@ class AuthService {
     // Return success message
     return { isRegistered: false };
   }
-  static async verifyEmail(email: string, code: string) {
+  static async checkEmailForgotPassword(email: string) {
+    // Check if email is exist
+    const user = await UserModel.getUserByEmail(email);
+    if (!user) throw new BadRequest('Email is not exist');
+
+    const cacheEmail = getCache(email);
+    if (cacheEmail) delCache(email);
+
+    // Store email in cache
+    const code = storeCache(email);
+
+    // Send email
+    sendMailForgotPassword(email, code);
+
+    // Return success message
+    return { isRegistered: true };
+  }
+  static async verifyCode(email: string, code: string) {
     // Check if email is in cache
     const cacheEmail = getCache(email);
     if (!cacheEmail) throw new BadRequest('Email is not exist');
@@ -69,6 +86,22 @@ class AuthService {
 
     // Return success message
     return { verified: true };
+  }
+  static async resetPassword(payload: { email: string; password: string }) {
+    const { email, password } = payload;
+
+    // Check if email is exist
+    const user = await UserModel.getUserByEmail(email);
+    if (!user) throw new BadRequest('Email is not exist');
+
+    const hashPassword = await hash(password);
+
+    // Update password
+    const updatedUser = await UserModel.updateUser(user._id.toString(), { password: hashPassword });
+    if (!updatedUser) throw new BadRequest('Something went wrong');
+
+    // Return success message
+    return { resetPassword: true };
   }
   static async login(payload: { email: string; password: string; res: Response }) {
     const { email, password, res } = payload;

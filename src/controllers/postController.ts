@@ -41,6 +41,7 @@ class AuthController {
     new Ok(
       'Search post successfully',
       await PostService.searchPosts({
+        page: req.query.page.toString(),
         query: req.query.search.toString(),
         filter: req.query.filter.toString() as FILTERS
       })

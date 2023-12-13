@@ -123,10 +123,10 @@ class PostService {
     }
     return { postID, saved: !saved };
   }
-  static async searchPosts(payload: { query: string; filter: FILTERS }) {
-    const { query, filter = 'All' } = payload;
+  static async searchPosts(payload: { page: string; query: string; filter: FILTERS }) {
+    const { query, filter = 'All', page } = payload;
 
-    return await PostModel.searchPosts(query, filter);
+    return await PostModel.searchPosts(page, query, filter);
   }
   static async getPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;

@@ -5,13 +5,19 @@ import AuthService from '../services/authService';
 import { RequestWithUser } from '../types';
 
 class AuthController {
-  static async checkEmail(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Check email successfully', await AuthService.checkEmail(req.body.email)).send(res);
+  static async checkEmailSignup(req: RequestWithUser, res: Response, _: NextFunction) {
+    new Ok('Check email successfully', await AuthService.checkEmailSignup(req.body.email)).send(res);
   }
-  static async verifyEmail(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Verify email successfully', await AuthService.verifyEmail(req.body.email, req.body.code)).send(
+  static async checkEmailForgotPassword(req: RequestWithUser, res: Response, _: NextFunction) {
+    new Ok('Check email successfully', await AuthService.checkEmailForgotPassword(req.body.email)).send(res);
+  }
+  static async verifyCode(req: RequestWithUser, res: Response, _: NextFunction) {
+    new Ok('Verify email successfully', await AuthService.verifyCode(req.body.email, req.body.code)).send(
       res
     );
+  }
+  static async resetPassword(req: RequestWithUser, res: Response, _: NextFunction) {
+    new Ok('Reset password successfully', await AuthService.resetPassword(req.body)).send(res);
   }
   static async login(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok('Login successfully', await AuthService.login({ ...req.body, res })).send(res);

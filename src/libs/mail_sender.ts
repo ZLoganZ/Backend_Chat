@@ -35,18 +35,18 @@ const sendMailForgotPassword = (email: string, code: string) => {
   const msg = {
     to: email,
     from: {
-      name: 'Chat Team',
-      address: 'support@chat.com'
+      name: 'Instafram Team',
+      address: 'support@instafram.com'
     },
-    subject: 'Reset your Chat password',
+    subject: 'Reset your Instafram password',
     html: `
         <table width="100%" border="0" cellpadding="0" cellspacing="0">
           <tr>
             <td style="background-color: #f4f4f4; padding: 20px; text-align: center;">
-              <img src="https://i.imgur.com/KcGts4j.png" alt="Chat Logo" style="max-width: 150px; margin-bottom: 20px;">
+              <img src="https://i.imgur.com/AzhnnOu.png" alt="Instafram Logo" style="max-width: 150px; margin-bottom: 20px;">
               <h1 style="font-size: 24px; font-weight: bold; color: #333;">Hello!</h1>
               <p style="font-size: 16px; color: #555;">
-                We received a request to reset the password for your Chat account. Please use the code below to reset your password:
+                We received a request to reset the password for your Instafram account. Please use the code below to reset your password:
               </p>
               <div style="background: #007bff; color: #fff; padding: 12px 24px; display: inline-block; font-size: 18px; border-radius: 5px; margin-top: 20px;">
                 <b>${code}</b>
@@ -55,11 +55,11 @@ const sendMailForgotPassword = (email: string, code: string) => {
                 If you didn't request a password reset, please ignore this email.
               </p>
               <p style="font-size: 16px; color: #555;">
-                For assistance, contact our support team at <a href="mailto:support@chat.com" style="color: #007bff; text-decoration: none;">support@chat.com</a>.
+                For assistance, contact our support team at <a href="mailto:support@instafram.com" style="color: #007bff; text-decoration: none;">support@instafram.com</a>.
               </p>
               <p style="font-size: 16px; color: #555;">
                 Sincerely,<br/>
-                The Chat Team
+                The Instafram Team
               </p>
             </td>
           </tr>
@@ -73,31 +73,31 @@ const sendMailVerifyEmail = (email: string, code: string) => {
   const msg = {
     to: email,
     from: {
-      name: 'Chat Team',
-      address: 'support@chat.com'
+      name: 'Instafram Team',
+      address: 'support@instafram.com'
     },
     subject: 'Verify your email address',
     html: `
           <table width="100%" border="0" cellpadding="0" cellspacing="0">
             <tr>
               <td style="background-color: #f4f4f4; padding: 20px; text-align: center;">
-                <img src="https://i.imgur.com/KcGts4j.png" alt="Chat Logo" style="max-width: 150px; margin-bottom: 20px;">
+                <img src="https://i.imgur.com/AzhnnOu.png" alt="Instafram Logo" style="max-width: 150px; margin-bottom: 20px;">
                 <h1 style="font-size: 24px; font-weight: bold; color: #333;">Hello!</h1>
                 <p style="font-size: 16px; color: #555;">
-                  Thank you for signing up for Chat! Please use the code below to verify your email address:
+                  Thank you for signing up for Instafram! Please use the code below to verify your email address:
                 </p>
                 <div style="background: #007bff; color: #fff; padding: 12px 24px; display: inline-block; font-size: 18px; border-radius: 5px; margin-top: 20px;">
                   <b>${code}</b>
                 </div>
                 <p style="font-size: 16px; color: #555; margin-top: 20px;">
-                  If you didn't create a Chat account, please ignore this email.
+                  If you didn't create a Instafram account, please ignore this email.
                 </p>
                 <p style="font-size: 16px; color: #555;">
-                  For assistance, contact our support team at <a href="mailto:support@chat.com" style="color: #007bff; text-decoration: none;">support@chat</a>.
+                  For assistance, contact our support team at <a href="mailto:support@instafram.com" style="color: #007bff; text-decoration: none;">support@instafram</a>.
                 </p>
                 <p style="font-size: 16px; color: #555;">
                   Sincerely,<br/>
-                  The Chat Team
+                  The Instafram Team
                 </p>
                 </td>
                 </tr>

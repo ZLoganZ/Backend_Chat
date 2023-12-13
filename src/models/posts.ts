@@ -173,8 +173,14 @@ const PostSchema = new Schema(
       async updatePost(id: string | Types.ObjectId, values: Record<string, any>) {
         return await this.findByIdAndUpdate(id, values, { new: true }).lean();
       },
-      async searchPosts(query: string, filter: FILTERS = 'All') {
+      async searchPosts(page: string, query: string, filter: FILTERS = 'All') {
+        const limit = 12;
+        const skip = parseInt(page) * limit;
+
         return await this.find({ $text: { $search: query } })
+          .sort({ score: { $meta: 'textScore' } })
+          .skip(skip)
+          .limit(limit)
           .populate<{ creator: IUser }>({
             path: 'creator',
             select: selectUserPopulate

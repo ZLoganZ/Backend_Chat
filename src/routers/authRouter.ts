@@ -6,8 +6,10 @@ import { Authentication } from '../middlewares';
 
 const router = Router();
 
-router.post('/checkEmail', asyncHandler(AuthController.checkEmail));
-router.post('/verifyEmail', asyncHandler(AuthController.verifyEmail));
+router.post('/checkEmail', asyncHandler(AuthController.checkEmailSignup));
+router.post('/checkEmailForgotPassword', asyncHandler(AuthController.checkEmailForgotPassword));
+router.post('/verifyCode', asyncHandler(AuthController.verifyCode));
+router.post('/resetPassword', asyncHandler(AuthController.resetPassword));
 router.post('/login', asyncHandler(AuthController.login));
 router.post('/register', asyncHandler(AuthController.register));
 router.use(Authentication);
