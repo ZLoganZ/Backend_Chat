@@ -93,7 +93,11 @@ class PostService {
     return await PostModel.getPosts(page);
   }
   static async getPost(postID: string) {
-    return await PostModel.getPostByID(postID);
+    const post = await PostModel.getPostByID(postID);
+    
+    if (!post) throw new BadRequest('Post not found');
+
+    return post;
   }
   static async likePost(payload: { postID: string; userID: string }) {
     const { postID, userID } = payload;

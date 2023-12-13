@@ -19,6 +19,8 @@ class UserService {
       user = await UserModel.getUserByAlias(userIDorAlias);
     }
 
+    if (!user) throw new BadRequest('User is not exist');
+
     return getInfoData({
       fields: selectUserArr,
       object: user
