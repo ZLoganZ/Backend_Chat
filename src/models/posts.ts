@@ -159,14 +159,10 @@ const PostSchema = new Schema(
           await this.create(values)
         ).populate<{ creator: IUser }>({ path: 'creator', select: selectUserPopulate });
 
-        await UserModel.findByIdAndUpdate(values.creator, { $push: { posts: post._id } });
-
         return post;
       },
       async deletePost(id: string | Types.ObjectId) {
         const post = await this.findByIdAndDelete(id).lean();
-
-        await UserModel.findByIdAndUpdate(post.creator, { $pull: { posts: post._id } });
 
         return post;
       },
