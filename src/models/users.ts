@@ -2,7 +2,7 @@ import { Schema, model, Types } from 'mongoose';
 
 import { IUser } from '../types';
 import { getSelectData } from '../libs/utils';
-import { selectUserArr } from '../libs/constants';
+import { selectUserPopulateArr } from '../libs/constants';
 
 const DOCUMENT_NAME = 'User';
 const COLLECTION_NAME = 'users';
@@ -88,14 +88,12 @@ const UserSchema = new Schema(
 
         return await this.aggregate<IUser>([
           {
-            $project: {
-              ...getSelectData(selectUserArr),
-              postCount: { $size: '$posts' }
-            }
+            $addFields: { postCount: { $size: '$posts' } }
           },
           { $sort: { postCount: -1 } },
           { $skip: skip },
-          { $limit: 12 }
+          { $limit: 12 },
+          { $project: { ...getSelectData(selectUserPopulateArr) } }
         ]);
       }
     }

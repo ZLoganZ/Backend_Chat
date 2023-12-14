@@ -80,14 +80,9 @@ const PostSchema = new Schema(
         const skip = parseInt(page) * limit;
 
         return await this.aggregate<IPost>([
-          {
-            $project: {
-              ...selectPostObj,
-              likesCount: { $size: '$likes' },
-              savesCount: { $size: '$saves' }
-            }
-          },
-          { $sort: { likesCount: -1, savesCount: -1 } },
+          { $addFields: { likesCount: { $size: '$likes' } } },
+          { $addFields: { savesCount: { $size: '$saves' } } },
+          { $sort: { likesCount: -1, savesCount: -1, createdAt: -1 } },
           { $skip: skip },
           { $limit: limit },
           {
@@ -99,6 +94,7 @@ const PostSchema = new Schema(
               as: 'creator'
             }
           },
+          { $unwind: '$creator' },
           {
             $lookup: {
               from: 'users',
@@ -124,11 +120,11 @@ const PostSchema = new Schema(
                     pipeline: [{ $project: selectUserPopulateObj }],
                     as: 'user'
                   }
-                }
+                },
+                { $unwind: '$user' }
               ]
             }
           },
-          { $unwind: '$creator' },
           { $project: selectPostObj }
         ]);
       },
@@ -297,11 +293,12 @@ const PostSchema = new Schema(
                     pipeline: [{ $project: selectUserPopulateObj }],
                     as: 'user'
                   }
-                }
+                },
+                { $unwind: '$user' }
               ]
             }
           },
-          { $project: { __v: 0, updatedAt: 0, sharedTags: 0, sharedTagsCount: 0 } }
+          { $project: selectPostObj }
         ]);
       }
     }
