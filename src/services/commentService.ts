@@ -43,6 +43,31 @@ class CommentService {
 
     return await CommentModel.getRepliesByCommentID(commentID, page);
   }
+  static async likeComment(payload: { commentID: string; userID: string }) {
+    const { commentID, userID } = payload;
+
+    if (!commentID) throw new BadRequest('Comment ID is required');
+    if (!userID) throw new BadRequest('User ID is required');
+
+    return await CommentModel.likeComment(commentID, userID);
+  }
+  static async replyComment(payload: { commentID: string; userID: string; content: string }) {
+    const { commentID, userID, content } = payload;
+
+    if (!commentID) throw new BadRequest('Comment ID is required');
+    if (!userID) throw new BadRequest('User ID is required');
+    if (!content) throw new BadRequest('Content is required');
+
+    return await CommentModel.replyComment(commentID, userID, content);
+  }
+  static async updateComment(payload: { commentID: string; content: string }) {
+    const { commentID, content } = payload;
+
+    if (!commentID) throw new BadRequest('Comment ID is required');
+    if (!content) throw new BadRequest('Content is required');
+
+    return await CommentModel.updateComment(commentID, { content });
+  }
 }
 
 export default CommentService;
