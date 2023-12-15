@@ -12,7 +12,7 @@ import { redis } from '../libs/redis';
 
 class UserService {
   static async getUser(userIDorAlias: string) {
-    const cache = await redis.get(REDIS_CACHE.USER + userIDorAlias);
+    const cache = await redis.get(`${REDIS_CACHE.USER}-${userIDorAlias}`);
     if (cache)
       return getInfoData({
         fields: selectUserArr,
@@ -29,7 +29,7 @@ class UserService {
 
     if (!user) throw new BadRequest('User is not exist');
 
-    redis.set(REDIS_CACHE.USER + userIDorAlias, JSON.stringify(user), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.USER}-${userIDorAlias}`, JSON.stringify(user), randomCacheTime());
 
     return getInfoData({
       fields: selectUserArr,
@@ -37,12 +37,12 @@ class UserService {
     });
   }
   static async getTopCreators(page: string) {
-    const cache = await redis.get(REDIS_CACHE.TOP_CREATORS + page);
+    const cache = await redis.get(`${REDIS_CACHE.TOP_CREATORS}-P${page}`);
     if (cache) return JSON.parse(cache);
 
     const users = await UserModel.getTopCreators(page);
 
-    redis.set(REDIS_CACHE.TOP_CREATORS + page, JSON.stringify(users), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.TOP_CREATORS}-P${page}`, JSON.stringify(users), randomCacheTime());
 
     return users;
   }
@@ -90,14 +90,7 @@ class UserService {
       updateNestedObject(removeUndefinedFields({ ...updateUser, image, alias: updateUser.alias }))
     );
 
-    redis.get(REDIS_CACHE.USER + userID, (error, result) => {
-      if (error) throw new BadRequest(error.message);
-      if (result) {
-        redis.set(REDIS_CACHE.USER + userID, JSON.stringify(user));
-      } else {
-        redis.set(REDIS_CACHE.USER + userID, JSON.stringify(user), 'EX', randomCacheTime());
-      }
-    });
+    redis.setex(`${REDIS_CACHE.USER}-${userID}`, JSON.stringify(user), randomCacheTime());
 
     return getInfoData({
       fields: selectUserArr,

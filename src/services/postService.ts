@@ -40,7 +40,7 @@ class PostService {
 
     await UserModel.updateUser(payload.creator, { $push: { posts: post._id } });
 
-    redis.set(REDIS_CACHE.POST + post._id, JSON.stringify(post), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.POST}-${post._id}`, randomCacheTime(), JSON.stringify(post));
 
     return post;
   }
@@ -84,14 +84,7 @@ class PostService {
       updateNestedObject(removeUndefinedFields({ ...payload, tags, image }))
     );
 
-    redis.get(REDIS_CACHE.POST + payload.postID, (error, result) => {
-      if (error) throw new BadRequest(error.message);
-      if (result) {
-        redis.set(REDIS_CACHE.POST + payload.postID, JSON.stringify(post));
-      } else {
-        redis.set(REDIS_CACHE.POST + payload.postID, JSON.stringify(post), 'EX', randomCacheTime());
-      }
-    });
+    redis.setex(`${REDIS_CACHE.POST}-${payload.postID}`, randomCacheTime(), JSON.stringify(post));
 
     return post;
   }
@@ -102,29 +95,29 @@ class PostService {
     post.image && imageHandler.destroy(post.image);
     post.saves && SaveModel.deleteSaves({ post: postID });
 
-    redis.del(REDIS_CACHE.POST + postID);
+    redis.del(`${REDIS_CACHE.POST}-${postID}`);
 
     return post;
   }
   static async getPosts(page: string) {
-    const cache = await redis.get(REDIS_CACHE.POSTS + page);
+    const cache = await redis.get(`${REDIS_CACHE.POSTS}-P${page}`);
     if (cache) return JSON.parse(cache);
 
     const posts = await PostModel.getPosts(page);
 
-    redis.set(REDIS_CACHE.POSTS + page, JSON.stringify(posts), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.POSTS}-P${page}`, randomCacheTime(), JSON.stringify(posts));
 
     return posts;
   }
   static async getPost(postID: string) {
-    const cache = await redis.get(REDIS_CACHE.POST + postID);
+    const cache = await redis.get(`${REDIS_CACHE.POST}-${postID}`);
     if (cache) return JSON.parse(cache);
 
     const post = await PostModel.getPostByID(postID);
 
     if (!post) throw new BadRequest('Post not found');
 
-    redis.set(REDIS_CACHE.POST + postID, JSON.stringify(post), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.POST}-${postID}`, randomCacheTime(), JSON.stringify(post));
 
     return post;
   }
@@ -164,13 +157,13 @@ class PostService {
   static async getPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    const cache = await redis.get(REDIS_CACHE.POSTS + userID + page);
+    const cache = await redis.get(`${REDIS_CACHE.POSTS}-${userID}-P${page}`);
     if (cache) return JSON.parse(cache);
 
     if (Types.ObjectId.isValid(userID)) {
       const posts = await PostModel.getPostsByUserID(userID, page);
 
-      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
+      redis.setex(`${REDIS_CACHE.POSTS}-${userID}-P${page}`, randomCacheTime(), JSON.stringify(posts));
 
       return posts;
     } else {
@@ -179,7 +172,7 @@ class PostService {
 
       const posts = await PostModel.getPostsByUserID(user._id, page);
 
-      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
+      redis.setex(`${REDIS_CACHE.POSTS}-${userID}-P${page}`, randomCacheTime(), JSON.stringify(posts));
 
       return posts;
     }
@@ -187,46 +180,46 @@ class PostService {
   static async getSavedPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    const cache = await redis.get(REDIS_CACHE.SAVED_POSTS + userID + page);
+    const cache = await redis.get(`${REDIS_CACHE.SAVED_POSTS}-${userID}-P${page}`);
     if (cache) return JSON.parse(cache);
 
     const posts = (await SaveModel.getSavedPostsByUserID(userID, page)).map((savedPost) => savedPost.post);
 
-    redis.set(REDIS_CACHE.SAVED_POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.SAVED_POSTS}-${userID}-P${page}`, randomCacheTime(), JSON.stringify(posts));
 
     return posts;
   }
   static async getLikedPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    const cache = await redis.get(REDIS_CACHE.LIKED_POSTS + userID + page);
+    const cache = await redis.get(`${REDIS_CACHE.LIKED_POSTS}-${userID}-P${page}`);
     if (cache) return JSON.parse(cache);
 
     const posts = await PostModel.getLikedPostsByUserID(userID, page);
 
-    redis.set(REDIS_CACHE.LIKED_POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.LIKED_POSTS}-${userID}-P${page}`, randomCacheTime(), JSON.stringify(posts));
 
     return posts;
   }
   static async getTopPosts(payload: { page: string; filter: FILTERS }) {
     const { page, filter = 'All' } = payload;
 
-    const cache = await redis.get(REDIS_CACHE.TOP_POSTS + page + filter);
+    const cache = await redis.get(`${REDIS_CACHE.TOP_POSTS}-P${page}-${filter}`);
     if (cache) return JSON.parse(cache);
 
     const posts = await PostModel.getTopPosts(page, filter);
 
-    redis.set(REDIS_CACHE.TOP_POSTS + page + filter, JSON.stringify(posts), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.TOP_POSTS}-P${page}-${filter}`, randomCacheTime(), JSON.stringify(posts));
 
     return posts;
   }
   static async getRelatedPostsByPostID(postID: string) {
-    const cache = await redis.get(REDIS_CACHE.RELATED_POSTS + postID);
+    const cache = await redis.get(`${REDIS_CACHE.RELATED_POSTS}-${postID}`);
     if (cache) return JSON.parse(cache);
 
     const posts = await PostModel.getRelatedPostsByPostID(postID);
 
-    redis.set(REDIS_CACHE.RELATED_POSTS + postID, JSON.stringify(posts), 'EX', randomCacheTime());
+    redis.setex(`${REDIS_CACHE.RELATED_POSTS}-${postID}`, randomCacheTime(), JSON.stringify(posts));
 
     return posts;
   }
