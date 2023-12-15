@@ -29,7 +29,7 @@ class UserService {
 
     if (!user) throw new BadRequest('User is not exist');
 
-    redis.setex(`${REDIS_CACHE.USER}-${userIDorAlias}`, JSON.stringify(user), randomCacheTime());
+    redis.setex(`${REDIS_CACHE.USER}-${userIDorAlias}`, randomCacheTime(), JSON.stringify(user));
 
     return getInfoData({
       fields: selectUserArr,
@@ -42,7 +42,7 @@ class UserService {
 
     const users = await UserModel.getTopCreators(page);
 
-    redis.setex(`${REDIS_CACHE.TOP_CREATORS}-P${page}`, JSON.stringify(users), randomCacheTime());
+    redis.setex(`${REDIS_CACHE.TOP_CREATORS}-P${page}`, randomCacheTime(), JSON.stringify(users));
 
     return users;
   }
@@ -90,7 +90,7 @@ class UserService {
       updateNestedObject(removeUndefinedFields({ ...updateUser, image, alias: updateUser.alias }))
     );
 
-    redis.setex(`${REDIS_CACHE.USER}-${userID}`, JSON.stringify(user), randomCacheTime());
+    redis.setex(`${REDIS_CACHE.USER}-${userID}`, randomCacheTime(), JSON.stringify(user));
 
     return getInfoData({
       fields: selectUserArr,
