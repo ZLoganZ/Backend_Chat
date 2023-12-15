@@ -6,7 +6,7 @@ import imageHandler from '../helpers/image';
 import { BadRequest } from '../cores/error.response';
 import { UserModel } from '../models/users';
 import { IUpdateUser } from '../types';
-import { getInfoData, removeUndefinedFields, updateNestedObject } from '../libs/utils';
+import { getInfoData, randomCacheTime, removeUndefinedFields, updateNestedObject } from '../libs/utils';
 import { selectUserArr, REDIS_CACHE } from '../libs/constants';
 import { redis } from '../libs/redis';
 
@@ -29,7 +29,7 @@ class UserService {
 
     if (!user) throw new BadRequest('User is not exist');
 
-    redis.set(REDIS_CACHE.USER + userIDorAlias, JSON.stringify(user), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.USER + userIDorAlias, JSON.stringify(user), 'EX', randomCacheTime());
 
     return getInfoData({
       fields: selectUserArr,
@@ -42,7 +42,7 @@ class UserService {
 
     const users = await UserModel.getTopCreators(page);
 
-    redis.set(REDIS_CACHE.TOP_CREATORS + page, JSON.stringify(users), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.TOP_CREATORS + page, JSON.stringify(users), 'EX', randomCacheTime());
 
     return users;
   }
@@ -95,7 +95,7 @@ class UserService {
       if (result) {
         redis.set(REDIS_CACHE.USER + userID, JSON.stringify(user));
       } else {
-        redis.set(REDIS_CACHE.USER + userID, JSON.stringify(user), 'EX', 60 * 60 * 24);
+        redis.set(REDIS_CACHE.USER + userID, JSON.stringify(user), 'EX', randomCacheTime());
       }
     });
 

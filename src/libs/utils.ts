@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import _ from 'lodash';
 
+import { CACHE_TIME } from './constants';
+
 export const random = () => crypto.randomBytes(128).toString('base64');
 export const hash = async (password: string, salt: number = 10) => {
   return await bcrypt.hash(password, salt);
@@ -73,3 +75,6 @@ export const strToArr = (str: string) => {
   strArr.forEach((item) => set.add(item));
   return Array.from(set);
 };
+export const randomCacheTime = () => {
+  return Math.floor(Math.random() * CACHE_TIME) + 100;
+}

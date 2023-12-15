@@ -49,3 +49,4 @@ export enum REDIS_CACHE {
   TOP_CREATORS = 'top-creators',
   TOP_POSTS = 'top-posts'
 }
+export const CACHE_TIME = 60 * 60;

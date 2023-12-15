@@ -8,7 +8,7 @@ import { UserModel } from '../models/users';
 import { BadRequest } from '../cores/error.response';
 import { FILTERS, INewPost, IUpdatePost } from '../types';
 import imageHandler from '../helpers/image';
-import { removeUndefinedFields, strToArr, updateNestedObject } from '../libs/utils';
+import { randomCacheTime, removeUndefinedFields, strToArr, updateNestedObject } from '../libs/utils';
 import { redis } from '../libs/redis';
 import { REDIS_CACHE } from '../libs/constants';
 
@@ -40,7 +40,7 @@ class PostService {
 
     await UserModel.updateUser(payload.creator, { $push: { posts: post._id } });
 
-    redis.set(REDIS_CACHE.POST + post._id, JSON.stringify(post), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.POST + post._id, JSON.stringify(post), 'EX', randomCacheTime());
 
     return post;
   }
@@ -89,7 +89,7 @@ class PostService {
       if (result) {
         redis.set(REDIS_CACHE.POST + payload.postID, JSON.stringify(post));
       } else {
-        redis.set(REDIS_CACHE.POST + payload.postID, JSON.stringify(post), 'EX', 60 * 60 * 24);
+        redis.set(REDIS_CACHE.POST + payload.postID, JSON.stringify(post), 'EX', randomCacheTime());
       }
     });
 
@@ -112,7 +112,7 @@ class PostService {
 
     const posts = await PostModel.getPosts(page);
 
-    redis.set(REDIS_CACHE.POSTS + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.POSTS + page, JSON.stringify(posts), 'EX', randomCacheTime());
 
     return posts;
   }
@@ -124,7 +124,7 @@ class PostService {
 
     if (!post) throw new BadRequest('Post not found');
 
-    redis.set(REDIS_CACHE.POST + postID, JSON.stringify(post), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.POST + postID, JSON.stringify(post), 'EX', randomCacheTime());
 
     return post;
   }
@@ -170,7 +170,7 @@ class PostService {
     if (Types.ObjectId.isValid(userID)) {
       const posts = await PostModel.getPostsByUserID(userID, page);
 
-      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
 
       return posts;
     } else {
@@ -179,7 +179,7 @@ class PostService {
 
       const posts = await PostModel.getPostsByUserID(user._id, page);
 
-      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
 
       return posts;
     }
@@ -192,7 +192,7 @@ class PostService {
 
     const posts = (await SaveModel.getSavedPostsByUserID(userID, page)).map((savedPost) => savedPost.post);
 
-    redis.set(REDIS_CACHE.SAVED_POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.SAVED_POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
 
     return posts;
   }
@@ -204,7 +204,7 @@ class PostService {
 
     const posts = await PostModel.getLikedPostsByUserID(userID, page);
 
-    redis.set(REDIS_CACHE.LIKED_POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.LIKED_POSTS + userID + page, JSON.stringify(posts), 'EX', randomCacheTime());
 
     return posts;
   }
@@ -216,7 +216,7 @@ class PostService {
 
     const posts = await PostModel.getTopPosts(page, filter);
 
-    redis.set(REDIS_CACHE.TOP_POSTS + page + filter, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.TOP_POSTS + page + filter, JSON.stringify(posts), 'EX', randomCacheTime());
 
     return posts;
   }
@@ -226,7 +226,7 @@ class PostService {
 
     const posts = await PostModel.getRelatedPostsByPostID(postID);
 
-    redis.set(REDIS_CACHE.RELATED_POSTS + postID, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+    redis.set(REDIS_CACHE.RELATED_POSTS + postID, JSON.stringify(posts), 'EX', randomCacheTime());
 
     return posts;
   }
