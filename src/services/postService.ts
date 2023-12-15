@@ -9,6 +9,8 @@ import { BadRequest } from '../cores/error.response';
 import { FILTERS, INewPost, IUpdatePost } from '../types';
 import imageHandler from '../helpers/image';
 import { removeUndefinedFields, strToArr, updateNestedObject } from '../libs/utils';
+import { redis } from '../libs/redis';
+import { REDIS_CACHE } from '../libs/constants';
 
 class PostService {
   static async createPost(payload: INewPost) {
@@ -37,6 +39,8 @@ class PostService {
     const post = await PostModel.createPost({ ...payload, image: uploadedImage.public_id, tags });
 
     await UserModel.updateUser(payload.creator, { $push: { posts: post._id } });
+
+    redis.set(REDIS_CACHE.POST + post._id, JSON.stringify(post), 'EX', 60 * 60 * 24);
 
     return post;
   }
@@ -75,10 +79,21 @@ class PostService {
     }
 
     delete payload.image;
-    return await PostModel.updatePost(
+    const post = await PostModel.updatePost(
       payload.postID,
       updateNestedObject(removeUndefinedFields({ ...payload, tags, image }))
     );
+
+    redis.get(REDIS_CACHE.POST + payload.postID, (error, result) => {
+      if (error) throw new BadRequest(error.message);
+      if (result) {
+        redis.set(REDIS_CACHE.POST + payload.postID, JSON.stringify(post));
+      } else {
+        redis.set(REDIS_CACHE.POST + payload.postID, JSON.stringify(post), 'EX', 60 * 60 * 24);
+      }
+    });
+
+    return post;
   }
   static async deletePost(postID: string) {
     const post = await PostModel.deletePost(postID);
@@ -87,15 +102,29 @@ class PostService {
     post.image && imageHandler.destroy(post.image);
     post.saves && SaveModel.deleteSaves({ post: postID });
 
+    redis.del(REDIS_CACHE.POST + postID);
+
     return post;
   }
   static async getPosts(page: string) {
-    return await PostModel.getPosts(page);
+    const cache = await redis.get(REDIS_CACHE.POSTS + page);
+    if (cache) return JSON.parse(cache);
+
+    const posts = await PostModel.getPosts(page);
+
+    redis.set(REDIS_CACHE.POSTS + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+
+    return posts;
   }
   static async getPost(postID: string) {
+    const cache = await redis.get(REDIS_CACHE.POST + postID);
+    if (cache) return JSON.parse(cache);
+
     const post = await PostModel.getPostByID(postID);
-    
+
     if (!post) throw new BadRequest('Post not found');
+
+    redis.set(REDIS_CACHE.POST + postID, JSON.stringify(post), 'EX', 60 * 60 * 24);
 
     return post;
   }
@@ -135,46 +164,71 @@ class PostService {
   static async getPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
+    const cache = await redis.get(REDIS_CACHE.POSTS + userID + page);
+    if (cache) return JSON.parse(cache);
+
     if (Types.ObjectId.isValid(userID)) {
-      return await PostModel.getPostsByUserID(userID, page);
+      const posts = await PostModel.getPostsByUserID(userID, page);
+
+      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+
+      return posts;
     } else {
       const user = await UserModel.getUserByAlias(userID);
       if (!user) throw new BadRequest('UserModel not found');
 
-      return await PostModel.getPostsByUserID(user._id, page);
+      const posts = await PostModel.getPostsByUserID(user._id, page);
+
+      redis.set(REDIS_CACHE.POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+
+      return posts;
     }
   }
   static async getSavedPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    if (Types.ObjectId.isValid(userID)) {
-      return (await SaveModel.getSavedPostsByUserID(userID, page)).map((savedPost) => savedPost.post);
-    } else {
-      const user = await UserModel.getUserByAlias(userID);
-      if (!user) throw new BadRequest('UserModel not found');
+    const cache = await redis.get(REDIS_CACHE.SAVED_POSTS + userID + page);
+    if (cache) return JSON.parse(cache);
 
-      return (await SaveModel.getSavedPostsByUserID(user._id, page)).map((savedPost) => savedPost.post);
-    }
+    const posts = (await SaveModel.getSavedPostsByUserID(userID, page)).map((savedPost) => savedPost.post);
+
+    redis.set(REDIS_CACHE.SAVED_POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+
+    return posts;
   }
   static async getLikedPostsByUserID(payload: { userID: string; page: string }) {
     const { userID, page } = payload;
 
-    if (Types.ObjectId.isValid(userID)) {
-      return await PostModel.getLikedPostsByUserID(userID, page);
-    } else {
-      const user = await UserModel.getUserByAlias(userID);
-      if (!user) throw new BadRequest('UserModel not found');
+    const cache = await redis.get(REDIS_CACHE.LIKED_POSTS + userID + page);
+    if (cache) return JSON.parse(cache);
 
-      return await PostModel.getLikedPostsByUserID(user._id, page);
-    }
+    const posts = await PostModel.getLikedPostsByUserID(userID, page);
+
+    redis.set(REDIS_CACHE.LIKED_POSTS + userID + page, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+
+    return posts;
   }
   static async getTopPosts(payload: { page: string; filter: FILTERS }) {
     const { page, filter = 'All' } = payload;
 
-    return await PostModel.getTopPosts(page, filter);
+    const cache = await redis.get(REDIS_CACHE.TOP_POSTS + page + filter);
+    if (cache) return JSON.parse(cache);
+
+    const posts = await PostModel.getTopPosts(page, filter);
+
+    redis.set(REDIS_CACHE.TOP_POSTS + page + filter, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+
+    return posts;
   }
   static async getRelatedPostsByPostID(postID: string) {
-    return await PostModel.getRelatedPostsByPostID(postID);
+    const cache = await redis.get(REDIS_CACHE.RELATED_POSTS + postID);
+    if (cache) return JSON.parse(cache);
+
+    const posts = await PostModel.getRelatedPostsByPostID(postID);
+
+    redis.set(REDIS_CACHE.RELATED_POSTS + postID, JSON.stringify(posts), 'EX', 60 * 60 * 24);
+
+    return posts;
   }
 }
 

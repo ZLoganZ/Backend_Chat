@@ -39,3 +39,13 @@ export enum HEADER {
   REFRESHTOKEN = 'refresh-token',
   GITHUB_TOKEN = 'github-token'
 }
+export enum REDIS_CACHE {
+  POST = 'post',
+  RELATED_POSTS = 'related-posts',
+  POSTS = 'posts',
+  SAVED_POSTS = 'saved-posts',
+  LIKED_POSTS = 'liked-posts',
+  USER = 'user',
+  TOP_CREATORS = 'top-creators',
+  TOP_POSTS = 'top-posts'
+}

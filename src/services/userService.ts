@@ -7,10 +7,18 @@ import { BadRequest } from '../cores/error.response';
 import { UserModel } from '../models/users';
 import { IUpdateUser } from '../types';
 import { getInfoData, removeUndefinedFields, updateNestedObject } from '../libs/utils';
-import { selectUserArr } from '../libs/constants';
+import { selectUserArr, REDIS_CACHE } from '../libs/constants';
+import { redis } from '../libs/redis';
 
 class UserService {
   static async getUser(userIDorAlias: string) {
+    const cache = await redis.get(REDIS_CACHE.USER + userIDorAlias);
+    if (cache)
+      return getInfoData({
+        fields: selectUserArr,
+        object: JSON.parse(cache)
+      });
+
     let user;
 
     if (Types.ObjectId.isValid(userIDorAlias)) {
@@ -21,13 +29,22 @@ class UserService {
 
     if (!user) throw new BadRequest('User is not exist');
 
+    redis.set(REDIS_CACHE.USER + userIDorAlias, JSON.stringify(user), 'EX', 60 * 60 * 24);
+
     return getInfoData({
       fields: selectUserArr,
       object: user
     });
   }
   static async getTopCreators(page: string) {
-    return await UserModel.getTopCreators(page);
+    const cache = await redis.get(REDIS_CACHE.TOP_CREATORS + page);
+    if (cache) return JSON.parse(cache);
+
+    const users = await UserModel.getTopCreators(page);
+
+    redis.set(REDIS_CACHE.TOP_CREATORS + page, JSON.stringify(users), 'EX', 60 * 60 * 24);
+
+    return users;
   }
   static async updateUser(payload: { userID: string; updateUser: IUpdateUser }) {
     const { userID, updateUser } = payload;
@@ -68,10 +85,24 @@ class UserService {
     }
 
     delete updateUser.image;
-    return await UserModel.updateUser(
+    const user = await UserModel.updateUser(
       userID,
       updateNestedObject(removeUndefinedFields({ ...updateUser, image, alias: updateUser.alias }))
     );
+
+    redis.get(REDIS_CACHE.USER + userID, (error, result) => {
+      if (error) throw new BadRequest(error.message);
+      if (result) {
+        redis.set(REDIS_CACHE.USER + userID, JSON.stringify(user));
+      } else {
+        redis.set(REDIS_CACHE.USER + userID, JSON.stringify(user), 'EX', 60 * 60 * 24);
+      }
+    });
+
+    return getInfoData({
+      fields: selectUserArr,
+      object: user
+    });
   }
   static async followUser(payload: { userID: string; followID: string }) {
     const { userID, followID } = payload;
