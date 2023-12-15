@@ -62,7 +62,8 @@ const PostSchema = new Schema(
           })
           .populate<{ likes: IUser[] }>({
             path: 'likes',
-            select: selectUserPopulate
+            select: selectUserPopulate,
+            options: { limit: 10 }
           })
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
@@ -100,7 +101,7 @@ const PostSchema = new Schema(
               from: 'users',
               localField: 'likes',
               foreignField: '_id',
-              pipeline: [{ $project: selectUserPopulateObj }],
+              pipeline: [{ $project: selectUserPopulateObj }, { $limit: 10 }],
               as: 'likes'
             }
           },
@@ -136,7 +137,8 @@ const PostSchema = new Schema(
           })
           .populate<{ likes: IUser[] }>({
             path: 'likes',
-            select: selectUserPopulate
+            select: selectUserPopulate,
+            options: { limit: 10 }
           })
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
@@ -178,7 +180,8 @@ const PostSchema = new Schema(
           })
           .populate<{ likes: IUser[] }>({
             path: 'likes',
-            select: selectUserPopulate
+            select: selectUserPopulate,
+            options: { limit: 10 }
           })
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
@@ -204,7 +207,8 @@ const PostSchema = new Schema(
           })
           .populate<{ likes: IUser[] }>({
             path: 'likes',
-            select: selectUserPopulate
+            select: selectUserPopulate,
+            options: { limit: 10 }
           })
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
@@ -231,7 +235,8 @@ const PostSchema = new Schema(
           })
           .populate<{ likes: IUser[] }>({
             path: 'likes',
-            select: selectUserPopulate
+            select: selectUserPopulate,
+            options: { limit: 10 }
           })
           .populate<{ saves: { user: IUser[] } }>({
             path: 'saves',
@@ -273,7 +278,7 @@ const PostSchema = new Schema(
               from: 'users',
               localField: 'likes',
               foreignField: '_id',
-              pipeline: [{ $project: selectUserPopulateObj }],
+              pipeline: [{ $project: selectUserPopulateObj }, { $limit: 10 }],
               as: 'likes'
             }
           },
