@@ -40,14 +40,8 @@ class PostService {
 
     await UserModel.updateUser(payload.creator, { $push: { posts: post._id } });
 
-    await redis.call(
-      'JSON.SET',
-      `${REDIS_CACHE.POST}-${post._id}`,
-      '$',
-      JSON.stringify(post),
-      'EX',
-      randomCacheTime()
-    );
+    await redis.call('JSON.SET', `${REDIS_CACHE.POST}-${post._id}`, '$', JSON.stringify(post));
+    await redis.expire(`${REDIS_CACHE.POST}-${post._id}`, randomCacheTime());
 
     return post;
   }
@@ -110,14 +104,8 @@ class PostService {
 
     const posts = await PostModel.getPosts(page);
 
-    await redis.call(
-      'JSON.SET',
-      `${REDIS_CACHE.POSTS}-P${page}`,
-      '$',
-      JSON.stringify(posts),
-      'EX',
-      randomCacheTime()
-    );
+    await redis.call('JSON.SET', `${REDIS_CACHE.POSTS}-P${page}`, '$', JSON.stringify(posts));
+    await redis.expire(`${REDIS_CACHE.POSTS}-P${page}`, randomCacheTime());
 
     return posts;
   }
@@ -129,14 +117,8 @@ class PostService {
 
     if (!post) throw new BadRequest('Post not found');
 
-    await redis.call(
-      'JSON.SET',
-      `${REDIS_CACHE.POST}-${postID}`,
-      '$',
-      JSON.stringify(post),
-      'EX',
-      randomCacheTime()
-    );
+    await redis.call('JSON.SET', `${REDIS_CACHE.POST}-${postID}`, '$', JSON.stringify(post));
+    await redis.expire(`${REDIS_CACHE.POST}-${postID}`, randomCacheTime());
 
     return post;
   }
@@ -182,14 +164,8 @@ class PostService {
     if (Types.ObjectId.isValid(userID)) {
       const posts = await PostModel.getPostsByUserID(userID, page);
 
-      await redis.call(
-        'JSON.SET',
-        `${REDIS_CACHE.POSTS}-${userID}-P${page}`,
-        '$',
-        JSON.stringify(posts),
-        'EX',
-        randomCacheTime()
-      );
+      await redis.call('JSON.SET', `${REDIS_CACHE.POSTS}-${userID}-P${page}`, '$', JSON.stringify(posts));
+      await redis.expire(`${REDIS_CACHE.POSTS}-${userID}-P${page}`, randomCacheTime());
 
       return posts;
     } else {
@@ -198,14 +174,8 @@ class PostService {
 
       const posts = await PostModel.getPostsByUserID(user._id, page);
 
-      await redis.call(
-        'JSON.SET',
-        `${REDIS_CACHE.POSTS}-${userID}-P${page}`,
-        '$',
-        JSON.stringify(posts),
-        'EX',
-        randomCacheTime()
-      );
+      await redis.call('JSON.SET', `${REDIS_CACHE.POSTS}-${userID}-P${page}`, '$', JSON.stringify(posts));
+      await redis.expire(`${REDIS_CACHE.POSTS}-${userID}-P${page}`, randomCacheTime());
 
       return posts;
     }
@@ -218,14 +188,8 @@ class PostService {
 
     const posts = (await SaveModel.getSavedPostsByUserID(userID, page)).map((savedPost) => savedPost.post);
 
-    await redis.call(
-      'JSON.SET',
-      `${REDIS_CACHE.SAVED_POSTS}-${userID}-P${page}`,
-      '$',
-      JSON.stringify(posts),
-      'EX',
-      randomCacheTime()
-    );
+    await redis.call('JSON.SET', `${REDIS_CACHE.SAVED_POSTS}-${userID}-P${page}`, '$', JSON.stringify(posts));
+    await redis.expire(`${REDIS_CACHE.SAVED_POSTS}-${userID}-P${page}`, randomCacheTime());
 
     return posts;
   }
@@ -237,14 +201,8 @@ class PostService {
 
     const posts = await PostModel.getLikedPostsByUserID(userID, page);
 
-    await redis.call(
-      'JSON.SET',
-      `${REDIS_CACHE.LIKED_POSTS}-${userID}-P${page}`,
-      '$',
-      JSON.stringify(posts),
-      'EX',
-      randomCacheTime()
-    );
+    await redis.call('JSON.SET', `${REDIS_CACHE.LIKED_POSTS}-${userID}-P${page}`, '$', JSON.stringify(posts));
+    await redis.expire(`${REDIS_CACHE.LIKED_POSTS}-${userID}-P${page}`, randomCacheTime());
 
     return posts;
   }
@@ -256,14 +214,8 @@ class PostService {
 
     const posts = await PostModel.getTopPosts(page, filter);
 
-    await redis.call(
-      'JSON.SET',
-      `${REDIS_CACHE.TOP_POSTS}-P${page}-${filter}`,
-      '$',
-      JSON.stringify(posts),
-      'EX',
-      randomCacheTime()
-    );
+    await redis.call('JSON.SET', `${REDIS_CACHE.TOP_POSTS}-P${page}-${filter}`, '$', JSON.stringify(posts));
+    await redis.expire(`${REDIS_CACHE.TOP_POSTS}-P${page}-${filter}`, randomCacheTime());
 
     return posts;
   }
@@ -273,14 +225,8 @@ class PostService {
 
     const posts = await PostModel.getRelatedPostsByPostID(postID);
 
-    await redis.call(
-      'JSON.SET',
-      `${REDIS_CACHE.RELATED_POSTS}-${postID}`,
-      '$',
-      JSON.stringify(posts),
-      'EX',
-      randomCacheTime()
-    );
+    await redis.call('JSON.SET', `${REDIS_CACHE.RELATED_POSTS}-${postID}`, '$', JSON.stringify(posts));
+    await redis.expire(`${REDIS_CACHE.RELATED_POSTS}-${postID}`, randomCacheTime());
 
     return posts;
   }
