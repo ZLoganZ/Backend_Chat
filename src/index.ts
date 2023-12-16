@@ -10,7 +10,7 @@ import { CustomError } from './types';
 import connectDB from './configs/initDB';
 import { MailSenderServer } from './libs/mail_sender';
 
-const app = express();
+export const app = express();
 
 app.use(cors());
 app.use(morgan('dev'));
