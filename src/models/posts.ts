@@ -169,7 +169,7 @@ const PostSchema = new Schema(
         const skip = parseInt(page) * limit;
 
         return await this.find({ $text: { $search: query } })
-          .sort({ score: { $meta: 'textScore' } })
+          .sort({ score: { $meta: 'textScore' }, createdAt: -1 })
           .skip(skip)
           .limit(limit)
           .populate<{ creator: IUser }>({
