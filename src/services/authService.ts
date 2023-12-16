@@ -224,7 +224,7 @@ class AuthService {
   static async me(id: string) {
     // Check if user is exist
     const user = await UserModel.getUserByID(id);
-    if (!user) throw new BadRequest('UserModel is not exist');
+    if (!user) throw new BadRequest('User is not exist');
 
     // Return user
     return getInfoData({
