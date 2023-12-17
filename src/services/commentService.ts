@@ -14,7 +14,7 @@ class CommentService {
 
     if (!postFind) throw new BadRequest('Post is not exist');
 
-    const comment = await CommentModel.createComment(payload);
+    const comment = await CommentModel.createComment({ ...payload, isChild: !!replyTo });
 
     if (replyTo) {
       await CommentModel.updateComment(replyTo, { $push: { replies: comment._id } });
@@ -50,15 +50,6 @@ class CommentService {
     if (!userID) throw new BadRequest('User ID is required');
 
     return await CommentModel.likeComment(commentID, userID);
-  }
-  static async replyComment(payload: { commentID: string; userID: string; content: string }) {
-    const { commentID, userID, content } = payload;
-
-    if (!commentID) throw new BadRequest('Comment ID is required');
-    if (!userID) throw new BadRequest('User ID is required');
-    if (!content) throw new BadRequest('Content is required');
-
-    return await CommentModel.replyComment(commentID, userID, content);
   }
   static async updateComment(payload: { commentID: string; content: string }) {
     const { commentID, content } = payload;

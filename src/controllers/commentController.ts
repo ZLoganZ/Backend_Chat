@@ -38,16 +38,6 @@ class CommentController {
       await CommentService.likeComment({ commentID: req.params.commentID, userID: req.user._id })
     ).send(res);
   }
-  static async replyComment(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Created(
-      'Reply comment successfully',
-      await CommentService.replyComment({
-        commentID: req.body.replyTo,
-        userID: req.user._id,
-        content: req.body.content
-      })
-    ).send(res);
-  }
   static async updateComment(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(
       'Update comment successfully',

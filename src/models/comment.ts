@@ -105,25 +105,6 @@ const CommentSchema = new Schema(
           await this.findByIdAndUpdate(commentID, { $push: { likes: userID } });
         }
         return { commentID, isLiked: !isLiked };
-      },
-      async replyComment(
-        commentID: string | Types.ObjectId,
-        userID: string | Types.ObjectId,
-        content: string
-      ) {
-        const comment = await this.findById(commentID);
-        if (!comment) throw new Error('Comment not found');
-
-        const replyComment = await this.create({
-          user: userID,
-          post: commentID,
-          content,
-          isChild: true
-        });
-
-        await this.findByIdAndUpdate(commentID, { $push: { replies: replyComment._id } });
-
-        return replyComment;
       }
     }
   }
