@@ -9,7 +9,7 @@ router.get('/replies/:commentID', asyncHandler(CommentController.getRepliesByCom
 router.get('/:postID', asyncHandler(CommentController.getCommentsByPostID));
 router.post('/', asyncHandler(CommentController.createComment));
 router.put('/:commentID/like', asyncHandler(CommentController.likeComment));
-router.put('/', asyncHandler(CommentController.updateComment));
+router.put('/:commentID', asyncHandler(CommentController.updateComment));
 router.delete('/:commentID', asyncHandler(CommentController.deleteComment));
 
 export default router;

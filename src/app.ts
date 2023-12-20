@@ -1,18 +1,14 @@
-require('dotenv').config();
 import express from 'express';
-import http from 'http';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 
 import routers from './routers';
 import { CustomError } from './types';
-import connectDB from './configs/initDB';
-import { MailSenderServer } from './libs/mail_sender';
 
-export const app = express();
+const app = express();
 
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(express.json());
@@ -37,14 +33,4 @@ app.use((error: CustomError, _: express.Request, res: express.Response, __: expr
   });
 });
 
-connectDB();
-
-MailSenderServer();
-
-const server = http.createServer(app);
-
-const PORT = process.env.PORT || 8080;
-
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+export default app;

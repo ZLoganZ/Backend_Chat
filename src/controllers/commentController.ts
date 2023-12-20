@@ -41,7 +41,7 @@ class CommentController {
   static async updateComment(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(
       'Update comment successfully',
-      await CommentService.updateComment({ commentID: req.body.replyTo, content: req.body.content })
+      await CommentService.updateComment({ ...req.body, commentID: req.params.commentID })
     ).send(res);
   }
 }

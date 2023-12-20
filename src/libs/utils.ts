@@ -15,9 +15,8 @@ export const compare = async (password: string, hash: string) => {
 };
 export const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    return Promise.resolve(fn(req, res, next)).catch(next);
-  };
+  (req: Request, res: Response, next: NextFunction) =>
+    Promise.resolve(fn(req, res, next)).catch(next);
 export const updateNestedObject = (obj: Record<string, any>) => {
   const newObj: Record<string, any> = {};
   Object.keys(obj).forEach((key) => {
@@ -77,4 +76,4 @@ export const strToArr = (str: string) => {
 };
 export const randomCacheTime = () => {
   return Math.floor(Math.random() * CACHE_TIME) + 100;
-}
+};
