@@ -206,8 +206,8 @@ class AuthService {
     if (!key) throw new BadRequest('Refresh token is not exist');
 
     // Delete refresh token
-    const deletedKey = await KeyModel.deleteKeyByID(key._id.toString());
-    if (!deletedKey) throw new BadRequest('Something went wrong');
+    const removeToken = await KeyModel.removeRefreshToken(key._id, refreshToken);
+    if (!removeToken) throw new BadRequest('Something went wrong');
 
     // Return success message
     return { logout: true };

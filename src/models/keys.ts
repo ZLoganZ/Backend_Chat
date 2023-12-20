@@ -27,7 +27,7 @@ const KeyTokenSchema = new Schema(
       default: []
     },
     refreshToken: {
-      type: String,
+      type: String || null,
       require: true
     }
   },
@@ -43,14 +43,15 @@ const KeyTokenSchema = new Schema(
       async findByRefreshToken(refreshToken: string) {
         return await this.findOne({ refreshToken }).lean();
       },
-      async deleteKeyByID(keyID: string | Types.ObjectId) {
-        return await this.findOneAndDelete({ _id: keyID }).lean();
-      },
       async findByUserID(userID: string | Types.ObjectId) {
         return await this.findOne({ user: userID }).lean();
       },
-      async removeKeyByID(keyID: string | Types.ObjectId) {
-        return await this.findByIdAndDelete(keyID).lean();
+      async removeRefreshToken(keyID: string | Types.ObjectId, refreshToken: string) {
+        return await this.findByIdAndUpdate(
+          keyID,
+          { $push: { refreshTokensUsed: refreshToken }, refreshToken: null },
+          { new: true }
+        ).lean();
       },
       async createKeyToken(
         userID: string | Types.ObjectId,
