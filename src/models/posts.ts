@@ -17,6 +17,11 @@ const PostSchema = new Schema(
       index: true,
       required: true
     },
+    visibility: {
+      type: String,
+      enum: ['Public', 'Private', 'Followers'],
+      default: 'Public'
+    },
     likes: {
       type: [ObjectId],
       ref: 'User',
@@ -49,31 +54,77 @@ const PostSchema = new Schema(
     timestamps: true,
     collection: COLLECTION_NAME,
     statics: {
-      async getPosts(page: string, sort: string = 'createdAt') {
+      async getPosts(userID, page: string, sort: string = 'createdAt') {
         const limit = 12;
         const skip = parseInt(page) * limit;
-        return await this.find()
-          .sort({ [sort]: -1 })
-          .skip(skip)
-          .limit(limit)
-          .populate<{ creator: IUser }>({
-            path: 'creator',
-            select: selectUserPopulate
-          })
-          .populate<{ likes: IUser[] }>({
-            path: 'likes',
-            select: selectUserPopulate
-          })
-          .populate<{ saves: { user: IUser[] } }>({
-            path: 'saves',
-            select: '-_id -__v -post',
-            populate: {
-              path: 'user',
-              select: selectUserPopulate
+
+        const user = await model<IUser>('User').findById(userID).lean();
+
+        return await this.aggregate([
+          {
+            $match: {
+              $or: [
+                { visibility: 'Public' },
+                {
+                  $and: [
+                    { visibility: 'Followers' },
+                    { $or: [{ creator: { $in: user.following } }, { creator: user._id }] }
+                  ]
+                },
+                { $and: [{ visibility: 'Private' }, { creator: user._id }] }
+              ]
             }
-          })
-          .select('-__v -updatedAt')
-          .lean();
+          },
+          { $sort: { [sort]: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'creator',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'creator'
+            }
+          },
+          { $unwind: '$creator' },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'likes',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'likes'
+            }
+          },
+          {
+            $lookup: {
+              from: 'saves',
+              localField: 'saves',
+              foreignField: '_id',
+              pipeline: [
+                { $project: { _id: 0, user: 1 } },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    pipeline: [{ $project: selectUserPopulateObj }],
+                    as: 'user'
+                  }
+                },
+                { $unwind: '$user' }
+              ],
+              as: 'saves'
+            }
+          },
+          {
+            $addFields: {
+              likesCount: { $size: '$likes' }
+            }
+          },
+          { $project: selectPostObj }
+        ]);
       },
       async getTopPosts(page: string, filter: FILTERS = 'All') {
         const limit = 12;
@@ -194,55 +245,148 @@ const PostSchema = new Schema(
       async getPostsByUserID(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
         const limit = 12;
         const skip = parseInt(page) * limit;
-        return await this.find({ creator: userID })
-          .sort({ [sort]: -1 })
-          .skip(skip)
-          .limit(limit)
-          .populate<{ creator: IUser }>({
-            path: 'creator',
-            select: selectUserPopulate
-          })
-          .populate<{ likes: IUser[] }>({
-            path: 'likes',
-            select: selectUserPopulate
-          })
-          .populate<{ saves: { user: IUser[] } }>({
-            path: 'saves',
-            select: '-_id -__v -post',
-            populate: {
-              path: 'user',
-              select: selectUserPopulate
+
+        const user = await model<IUser>('User').findById(userID).lean();
+
+        return await this.aggregate([
+          { $match: { creator: userID } },
+          {
+            $match: {
+              $or: [
+                { visibility: 'Public' },
+                {
+                  $and: [
+                    { visibility: 'Followers' },
+                    { $or: [{ creator: { $in: user.following } }, { creator: user._id }] }
+                  ]
+                },
+                { $and: [{ visibility: 'Private' }, { creator: user._id }] }
+              ]
             }
-          })
-          .select('-__v -updatedAt')
-          .lean();
+          },
+          { $sort: { [sort]: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'creator',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'creator'
+            }
+          },
+          { $unwind: '$creator' },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'likes',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'likes'
+            }
+          },
+          {
+            $lookup: {
+              from: 'saves',
+              localField: 'saves',
+              foreignField: '_id',
+              pipeline: [
+                { $project: { _id: 0, user: 1 } },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    pipeline: [{ $project: selectUserPopulateObj }],
+                    as: 'user'
+                  }
+                },
+                { $unwind: '$user' }
+              ],
+              as: 'saves'
+            }
+          },
+          {
+            $addFields: {
+              likesCount: { $size: '$likes' }
+            }
+          },
+          { $project: selectPostObj }
+        ]);
       },
       async getLikedPostsByUserID(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
         const limit = 12;
         const skip = parseInt(page) * limit;
 
-        return await this.find({ likes: { $in: userID } })
-          .sort({ [sort]: -1 })
-          .skip(skip)
-          .limit(limit)
-          .populate<{ creator: IUser }>({
-            path: 'creator',
-            select: selectUserPopulate
-          })
-          .populate<{ likes: IUser[] }>({
-            path: 'likes',
-            select: selectUserPopulate
-          })
-          .populate<{ saves: { user: IUser[] } }>({
-            path: 'saves',
-            select: '-_id -__v -post',
-            populate: {
-              path: 'user',
-              select: selectUserPopulate
+        const user = await model<IUser>('User').findById(userID).lean();
+
+        return await this.aggregate([
+          { $match: { likes: new Types.ObjectId(userID) } },
+          {
+            $match: {
+              $or: [
+                { visibility: 'Public' },
+                {
+                  $and: [
+                    { visibility: 'Followers' },
+                    { $or: [{ creator: { $in: user.following } }, { creator: user._id }] }
+                  ]
+                },
+                { $and: [{ visibility: 'Private' }, { creator: user._id }] }
+              ]
             }
-          })
-          .select('-__v -updatedAt')
-          .lean();
+          },
+          { $sort: { [sort]: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'creator',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'creator'
+            }
+          },
+          { $unwind: '$creator' },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'likes',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'likes'
+            }
+          },
+          {
+            $lookup: {
+              from: 'saves',
+              localField: 'saves',
+              foreignField: '_id',
+              pipeline: [
+                { $project: { _id: 0, user: 1 } },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    pipeline: [{ $project: selectUserPopulateObj }],
+                    as: 'user'
+                  }
+                },
+                { $unwind: '$user' }
+              ],
+              as: 'saves'
+            }
+          },
+          {
+            $addFields: {
+              likesCount: { $size: '$likes' }
+            }
+          },
+          { $project: selectPostObj }
+        ]);
       },
       async getRelatedPostsByPostID(postID: string | Types.ObjectId) {
         const post = await this.findById(postID).lean();

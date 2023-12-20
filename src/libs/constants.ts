@@ -8,12 +8,13 @@ export const selectUserPopulateObj = {
   image: 1,
   alias: 1
 };
-export const selectPost = '_id content image creator likes comments saves tags location createdAt';
+export const selectPost = '_id content image visibility creator likes comments saves tags location createdAt';
 export const selectPostArr = [
   '_id',
   'content',
   'image',
   'creator',
+  'visibility',
   'likes',
   'comments',
   'saves',
@@ -25,6 +26,7 @@ export const selectPostObj = {
   _id: 1,
   content: 1,
   creator: 1,
+  visibility: 1,
   likes: 1,
   comments: 1,
   saves: 1,

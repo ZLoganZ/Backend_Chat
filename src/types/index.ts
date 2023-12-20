@@ -10,7 +10,7 @@ export interface RequestWithUser extends Request {
   };
 }
 
-export interface IUser {
+export type IUser = {
   _id: string;
   name: string;
   email: string;
@@ -22,47 +22,52 @@ export interface IUser {
   following: IUser[];
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface IPost {
+export type IVisibility = 'Public' | 'Private' | 'Followers';
+
+export type IPost = {
   _id: string;
   content: string;
   image: string;
   location: string;
+  visibility: IVisibility;
   tags: string[];
   likes: IUser[];
   saves: string[];
   creator: IUser;
   createdAt: string;
   updatedAt: string;
-}
+};
 
-export interface IUpdateUser {
+export type IUpdateUser = {
   name: string;
   bio: string;
   alias: string;
   image: Express.Multer.File;
   isChangeImage: boolean;
-}
+};
 
-export interface INewPost {
+export type INewPost = {
   content: string;
   creator: string;
+  visibility: IVisibility;
   tags: string;
   image: Express.Multer.File;
   location: string;
-}
+};
 
-export interface IUpdatePost {
+export type IUpdatePost = {
   postID: string;
   content: string;
+  visibility: IVisibility;
   image: Express.Multer.File;
   isChangeImage: boolean;
   location?: string;
   tags?: string;
-}
+};
 
-export interface IComment {
+export type IComment = {
   _id: string;
   content: string;
   user: IUser;
@@ -72,7 +77,7 @@ export interface IComment {
   replies: IComment[];
   createdAt: string;
   updatedAt: string;
-}
+};
 
 export class CustomError extends Error {
   code: number;

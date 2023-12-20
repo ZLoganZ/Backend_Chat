@@ -20,7 +20,10 @@ class AuthController {
     new Accepted('Delete post successfully', await PostService.deletePost(req.params.postID)).send(res);
   }
   static async getPosts(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Get posts successfully', await PostService.getPosts(req.query.page.toString())).send(res);
+    new Ok(
+      'Get posts successfully',
+      await PostService.getPosts({ userID: req.user._id, page: req.query.page.toString() })
+    ).send(res);
   }
   static async getPost(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok('Get post successfully', await PostService.getPost(req.params.postID)).send(res);

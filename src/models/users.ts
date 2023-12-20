@@ -95,6 +95,18 @@ const UserSchema = new Schema(
           { $limit: 12 },
           { $project: { ...getSelectData(selectUserPopulateArr) } }
         ]);
+      },
+      async getFollowingsByUserID(userID: string) {
+        const user = await this.findById(userID).lean();
+        if (!user) return [];
+
+        return await this.find({ _id: { $in: user.following } }).lean();
+      },
+      async getFollowersByUserID(userID: string) {
+        const user = await this.findById(userID).lean();
+        if (!user) return [];
+
+        return await this.find({ _id: { $in: user.followers } }).lean();
       }
     }
   }

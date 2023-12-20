@@ -17,6 +17,8 @@ class PostService {
     if (!payload.content) throw new BadRequest('Content is required');
     if (!payload.creator) throw new BadRequest('Creator is required');
     if (!payload.image) throw new BadRequest('Image is required');
+    if (!payload.tags) throw new BadRequest('Tags is required');
+    if (!payload.visibility) throw new BadRequest('Visibility is required');
 
     const tags = strToArr(payload.tags);
 
@@ -98,11 +100,12 @@ class PostService {
 
     return post;
   }
-  static async getPosts(page: string) {
+  static async getPosts(payload: { userID: string; page: string }) {
+    const { userID, page } = payload;
     const cache = (await redis.call('JSON.GET', `${REDIS_CACHE.POSTS}-P${page}`)) as string;
     if (cache) return JSON.parse(cache);
 
-    const posts = await PostModel.getPosts(page);
+    const posts = await PostModel.getPosts(userID,page);
 
     await redis.call('JSON.SET', `${REDIS_CACHE.POSTS}-P${page}`, '$', JSON.stringify(posts));
     await redis.expire(`${REDIS_CACHE.POSTS}-P${page}`, randomCacheTime());
