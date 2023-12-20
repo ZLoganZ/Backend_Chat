@@ -20,15 +20,15 @@ class AuthController {
     new Ok('Reset password successfully', await AuthService.resetPassword(req.body)).send(res);
   }
   static async login(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Login successfully', await AuthService.login({ ...req.body, res })).send(res);
+    new Ok('Login successfully', await AuthService.login({ ...req.body })).send(res);
   }
   static async register(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Created('Register successfully', await AuthService.register({ ...req.body, res })).send(res);
+    new Created('Register successfully', await AuthService.register({ ...req.body })).send(res);
   }
   static async logout(req: RequestWithUser, res: Response, _: NextFunction) {
     new Accepted(
       'Logout successfully',
-      await AuthService.logout({ refreshToken: req.user.refreshToken, res })
+      await AuthService.logout({ refreshToken: req.user.refreshToken })
     ).send(res);
   }
   static async me(req: RequestWithUser, res: Response, _: NextFunction) {

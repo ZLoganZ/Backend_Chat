@@ -5,7 +5,7 @@ import { UserModel } from '../models/users';
 import { KeyModel } from '../models/keys';
 import { BadRequest, Unauthorized } from '../cores/error.response';
 import { hash, compare, createTokenPair, getInfoData } from '../libs/utils';
-import { sendMailVerifyEmail,sendMailForgotPassword } from '../libs/mail_sender';
+import { sendMailVerifyEmail, sendMailForgotPassword } from '../libs/mail_sender';
 import { selectUserArr } from '../libs/constants';
 
 interface Cache {
@@ -103,8 +103,8 @@ class AuthService {
     // Return success message
     return { resetPassword: true };
   }
-  static async login(payload: { email: string; password: string; res: Response }) {
-    const { email, password, res } = payload;
+  static async login(payload: { email: string; password: string }) {
+    const { email, password } = payload;
 
     // Check if email is exist
     const user = await UserModel.getUserByEmail(email);
@@ -148,14 +148,8 @@ class AuthService {
       tokens
     };
   }
-  static async register(payload: {
-    name: string;
-    email: string;
-    password: string;
-    alias: string;
-    res: Response;
-  }) {
-    const { name, email, password, alias, res } = payload;
+  static async register(payload: { name: string; email: string; password: string; alias: string }) {
+    const { name, email, password, alias } = payload;
 
     // Check if alias is exist
     const userAlias = await UserModel.getUserByAlias(alias);
@@ -204,8 +198,8 @@ class AuthService {
       tokens
     };
   }
-  static async logout(payload: { refreshToken: string; res: Response }) {
-    const { refreshToken, res } = payload;
+  static async logout(payload: { refreshToken: string }) {
+    const { refreshToken } = payload;
 
     // Check if refresh token is exist
     const key = await KeyModel.findByRefreshToken(refreshToken);
@@ -214,9 +208,6 @@ class AuthService {
     // Delete refresh token
     const deletedKey = await KeyModel.deleteKeyByID(key._id.toString());
     if (!deletedKey) throw new BadRequest('Something went wrong');
-
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
 
     // Return success message
     return { logout: true };

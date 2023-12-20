@@ -61,7 +61,6 @@ const KeyTokenSchema = new Schema(
         const update = {
           publicKey,
           privateKey,
-          refreshTokensUsed: [] as string[],
           refreshToken
         };
 
