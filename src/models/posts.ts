@@ -350,11 +350,16 @@ const PostSchema = new Schema(
           { $project: selectPostObj }
         ]);
       },
-      async getPostsByUserID(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
+      async getPostsByUserID(
+        userID: string | Types.ObjectId,
+        curUserID: string,
+        page: string,
+        sort: string = 'createdAt'
+      ) {
         const limit = 12;
         const skip = parseInt(page) * limit;
 
-        const user = await model<IUser>('User').findById(userID).lean();
+        const user = await model<IUser>('User').findById(curUserID).lean();
 
         return await this.aggregate([
           { $match: { creator: userID } },

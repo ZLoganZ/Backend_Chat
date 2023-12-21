@@ -160,14 +160,14 @@ class PostService {
 
     return await PostModel.searchPosts(userID, page, query, filter);
   }
-  static async getPostsByUserID(payload: { userID: string; page: string }) {
-    const { userID, page } = payload;
+  static async getPostsByUserID(payload: { userID: string; page: string; curUserID: string }) {
+    const { userID, curUserID, page } = payload;
 
     // const cache = (await redis.call('JSON.GET', `${REDIS_CACHE.POSTS}-${userID}-P${page}`)) as string;
     // if (cache) return JSON.parse(cache);
 
     if (Types.ObjectId.isValid(userID)) {
-      const posts = await PostModel.getPostsByUserID(userID, page);
+      const posts = await PostModel.getPostsByUserID(userID, curUserID, page);
 
       // await redis.call('JSON.SET', `${REDIS_CACHE.POSTS}-${userID}-P${page}`, '$', JSON.stringify(posts));
       // await redis.expire(`${REDIS_CACHE.POSTS}-${userID}-P${page}`, randomCacheTime());
@@ -177,7 +177,7 @@ class PostService {
       const user = await UserModel.getUserByAlias(userID);
       if (!user) throw new BadRequest('UserModel not found');
 
-      const posts = await PostModel.getPostsByUserID(user._id, page);
+      const posts = await PostModel.getPostsByUserID(user._id, curUserID, page);
 
       // await redis.call('JSON.SET', `${REDIS_CACHE.POSTS}-${userID}-P${page}`, '$', JSON.stringify(posts));
       // await redis.expire(`${REDIS_CACHE.POSTS}-${userID}-P${page}`, randomCacheTime());

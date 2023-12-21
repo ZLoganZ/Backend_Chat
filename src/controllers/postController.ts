@@ -64,7 +64,7 @@ class AuthController {
   static async getPostsByUserID(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(
       'Get posts by user id successfully',
-      await PostService.getPostsByUserID({ userID: req.params.userID, page: req.query.page.toString() })
+      await PostService.getPostsByUserID({ userID: req.params.userID, page: req.query.page.toString(), curUserID: req.user._id })
     ).send(res);
   }
   static async getSavedPostsByUserID(req: RequestWithUser, res: Response, _: NextFunction) {
