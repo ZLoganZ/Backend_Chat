@@ -12,12 +12,12 @@ import { redis } from '../libs/redis';
 
 class UserService {
   static async getUser(userIDorAlias: string) {
-    const cache = await redis.get(`${REDIS_CACHE.USER}-${userIDorAlias}`);
-    if (cache)
-      return getInfoData({
-        fields: selectUserArr,
-        object: JSON.parse(cache)
-      });
+    // const cache = await redis.get(`${REDIS_CACHE.USER}-${userIDorAlias}`);
+    // if (cache)
+    //   return getInfoData({
+    //     fields: selectUserArr,
+    //     object: JSON.parse(cache)
+    //   });
 
     let user;
 
@@ -29,7 +29,7 @@ class UserService {
 
     if (!user) throw new BadRequest('User is not exist');
 
-    redis.setex(`${REDIS_CACHE.USER}-${userIDorAlias}`, randomCacheTime(), JSON.stringify(user));
+    // redis.setex(`${REDIS_CACHE.USER}-${userIDorAlias}`, randomCacheTime(), JSON.stringify(user));
 
     return getInfoData({
       fields: selectUserArr,
@@ -37,12 +37,12 @@ class UserService {
     });
   }
   static async getTopCreators(page: string) {
-    const cache = await redis.get(`${REDIS_CACHE.TOP_CREATORS}-P${page}`);
-    if (cache) return JSON.parse(cache);
+    // const cache = await redis.get(`${REDIS_CACHE.TOP_CREATORS}-P${page}`);
+    // if (cache) return JSON.parse(cache);
 
     const users = await UserModel.getTopCreators(page);
 
-    redis.setex(`${REDIS_CACHE.TOP_CREATORS}-P${page}`, randomCacheTime(), JSON.stringify(users));
+    // redis.setex(`${REDIS_CACHE.TOP_CREATORS}-P${page}`, randomCacheTime(), JSON.stringify(users));
 
     return users;
   }
@@ -90,7 +90,7 @@ class UserService {
       updateNestedObject(removeUndefinedFields({ ...updateUser, image, alias: updateUser.alias }))
     );
 
-    redis.setex(`${REDIS_CACHE.USER}-${userID}`, randomCacheTime(), JSON.stringify(user));
+    // redis.setex(`${REDIS_CACHE.USER}-${userID}`, randomCacheTime(), JSON.stringify(user));
 
     return getInfoData({
       fields: selectUserArr,
