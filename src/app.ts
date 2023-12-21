@@ -22,7 +22,7 @@ app.get('/', (_, res) => {
 
 // handling error
 app.use((_, __, next) => {
-  const error = new CustomError('Not found route', 404);
+  const error = new CustomError('Not found', 404);
   next(error);
 });
 
