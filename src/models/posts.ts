@@ -54,7 +54,7 @@ const PostSchema = new Schema(
     timestamps: true,
     collection: COLLECTION_NAME,
     statics: {
-      async getPosts(userID, page: string, sort: string = 'createdAt') {
+      async getPosts(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
         const limit = 12;
         const skip = parseInt(page) * limit;
 
@@ -126,11 +126,27 @@ const PostSchema = new Schema(
           { $project: selectPostObj }
         ]);
       },
-      async getTopPosts(page: string, filter: FILTERS = 'All') {
+      async getTopPosts(userID: string | Types.ObjectId, page: string, filter: FILTERS = 'All') {
         const limit = 12;
         const skip = parseInt(page) * limit;
 
+        const user = await model<IUser>('User').findById(userID).lean();
+
         return await this.aggregate<IPost>([
+          {
+            $match: {
+              $or: [
+                { visibility: 'Public' },
+                {
+                  $and: [
+                    { visibility: 'Followers' },
+                    { $or: [{ creator: { $in: user.following } }, { creator: user._id }] }
+                  ]
+                },
+                { $and: [{ visibility: 'Private' }, { creator: user._id }] }
+              ]
+            }
+          },
           { $addFields: { likesCount: { $size: '$likes' } } },
           { $addFields: { savesCount: { $size: '$saves' } } },
           { $sort: { likesCount: -1, savesCount: -1, createdAt: -1 } },
@@ -179,26 +195,67 @@ const PostSchema = new Schema(
           { $project: selectPostObj }
         ]);
       },
-      async getPostByID(id: string | Types.ObjectId) {
-        return await this.findById(id)
-          .populate<{ creator: IUser }>({
-            path: 'creator',
-            select: selectUserPopulate
-          })
-          .populate<{ likes: IUser[] }>({
-            path: 'likes',
-            select: selectUserPopulate
-          })
-          .populate<{ saves: { user: IUser[] } }>({
-            path: 'saves',
-            select: '-_id -__v -post',
-            populate: {
-              path: 'user',
-              select: selectUserPopulate
+      async getPostByID(id: string | Types.ObjectId, userID: string | Types.ObjectId) {
+        const user = await model<IUser>('User').findById(userID).lean();
+
+        return await this.aggregate<IPost>([
+          { $match: { _id: new Types.ObjectId(id) } },
+          {
+            $match: {
+              $or: [
+                { visibility: 'Public' },
+                {
+                  $and: [
+                    { visibility: 'Followers' },
+                    { $or: [{ creator: { $in: user.following } }, { creator: user._id }] }
+                  ]
+                },
+                { $and: [{ visibility: 'Private' }, { creator: user._id }] }
+              ]
             }
-          })
-          .select('-__v -updatedAt')
-          .lean();
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'creator',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'creator'
+            }
+          },
+          { $unwind: '$creator' },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'likes',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'likes'
+            }
+          },
+          {
+            $lookup: {
+              from: 'saves',
+              localField: 'saves',
+              foreignField: '_id',
+              as: 'saves',
+              pipeline: [
+                { $project: { _id: 0, user: 1 } },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    pipeline: [{ $project: selectUserPopulateObj }],
+                    as: 'user'
+                  }
+                },
+                { $unwind: '$user' }
+              ]
+            }
+          },
+          { $project: selectPostObj }
+        ]).then((posts) => posts[0]);
       },
       async createPost(values: Record<string, any>) {
         const post = await (
@@ -215,32 +272,83 @@ const PostSchema = new Schema(
       async updatePost(id: string | Types.ObjectId, values: Record<string, any>) {
         return await this.findByIdAndUpdate(id, values, { new: true }).lean();
       },
-      async searchPosts(page: string, query: string, filter: FILTERS = 'All') {
+      async searchPosts(
+        userID: string | Types.ObjectId,
+        page: string,
+        query: string,
+        filter: FILTERS = 'All'
+      ) {
         const limit = 12;
         const skip = parseInt(page) * limit;
 
-        return await this.find({ $text: { $search: query } })
-          .sort({ score: { $meta: 'textScore' }, createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .populate<{ creator: IUser }>({
-            path: 'creator',
-            select: selectUserPopulate
-          })
-          .populate<{ likes: IUser[] }>({
-            path: 'likes',
-            select: selectUserPopulate
-          })
-          .populate<{ saves: { user: IUser[] } }>({
-            path: 'saves',
-            select: '-_id -__v -post',
-            populate: {
-              path: 'user',
-              select: selectUserPopulate
+        const user = await model<IUser>('User').findById(userID).lean();
+
+        return await this.aggregate([
+          { $match: { $text: { $search: query } } },
+          {
+            $match: {
+              $or: [
+                { visibility: 'Public' },
+                {
+                  $and: [
+                    { visibility: 'Followers' },
+                    { $or: [{ creator: { $in: user.following } }, { creator: user._id }] }
+                  ]
+                },
+                { $and: [{ visibility: 'Private' }, { creator: user._id }] }
+              ]
             }
-          })
-          .select('-__v -updatedAt')
-          .lean();
+          },
+          { $sort: { score: { $meta: 'textScore' }, createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'creator',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'creator'
+            }
+          },
+          { $unwind: '$creator' },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'likes',
+              foreignField: '_id',
+              pipeline: [{ $project: selectUserPopulateObj }],
+              as: 'likes'
+            }
+          },
+          {
+            $lookup: {
+              from: 'saves',
+              localField: 'saves',
+              foreignField: '_id',
+              pipeline: [
+                { $project: { _id: 0, user: 1 } },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    pipeline: [{ $project: selectUserPopulateObj }],
+                    as: 'user'
+                  }
+                },
+                { $unwind: '$user' }
+              ],
+              as: 'saves'
+            }
+          },
+          {
+            $addFields: {
+              likesCount: { $size: '$likes' }
+            }
+          },
+          { $project: selectPostObj }
+        ]);
       },
       async getPostsByUserID(userID: string | Types.ObjectId, page: string, sort: string = 'createdAt') {
         const limit = 12;
@@ -388,14 +496,30 @@ const PostSchema = new Schema(
           { $project: selectPostObj }
         ]);
       },
-      async getRelatedPostsByPostID(postID: string | Types.ObjectId) {
+      async getRelatedPostsByPostID(postID: string | Types.ObjectId, userID: string | Types.ObjectId) {
         const post = await this.findById(postID).lean();
+
+        const user = await model<IUser>('User').findById(userID).lean();
 
         return await this.aggregate<IPost>([
           {
             $match: {
               $or: [{ tags: { $in: post.tags } }, { location: { $regex: post.location, $options: 'i' } }],
               _id: { $ne: new Types.ObjectId(postID) }
+            }
+          },
+          {
+            $match: {
+              $or: [
+                { visibility: 'Public' },
+                {
+                  $and: [
+                    { visibility: 'Followers' },
+                    { $or: [{ creator: { $in: user.following } }, { creator: user._id }] }
+                  ]
+                },
+                { $and: [{ visibility: 'Private' }, { creator: user._id }] }
+              ]
             }
           },
           { $addFields: { sharedTags: { $setIntersection: ['$tags', post.tags] } } },

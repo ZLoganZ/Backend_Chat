@@ -128,7 +128,7 @@ class AuthService {
     });
 
     // Generate token pair
-    const tokens = createTokenPair({ _id: user._id, email: user.email }, publicKey, privateKey);
+    const tokens = await createTokenPair({ _id: user._id, email: user.email }, publicKey, privateKey);
 
     // Save token pair
     const key = await KeyModel.createKeyToken(
@@ -178,7 +178,7 @@ class AuthService {
     });
 
     // Generate token pair
-    const tokens = createTokenPair({ _id: newUser._id, email: newUser.email }, publicKey, privateKey);
+    const tokens = await createTokenPair({ _id: newUser._id, email: newUser.email }, publicKey, privateKey);
 
     // Save token pair
     const key = await KeyModel.createKeyToken(

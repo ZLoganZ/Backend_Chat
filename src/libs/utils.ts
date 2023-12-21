@@ -40,15 +40,21 @@ export const removeUndefinedFields = (obj: Record<string, any>) => {
   });
   return newObj;
 };
-export const createTokenPair = (payload: Record<string, any>, publicKey: string, privateKey: string) => {
+export const createTokenPair = async (
+  payload: Record<string, any>,
+  publicKey: string,
+  privateKey: string
+) => {
   try {
     // access token
-    const accessToken = jwt.sign(payload, privateKey, { expiresIn: '7 days', algorithm: 'RS256' });
+    const accessToken = jwt.sign(payload, privateKey, { expiresIn: '1 days', algorithm: 'RS256' });
     // refresh token
-    const refreshToken = jwt.sign(payload, privateKey, { expiresIn: '30 days', algorithm: 'RS256' });
-    jwt.verify(accessToken, publicKey, (err) => {
-      if (err) console.error(err);
-    });
+    const refreshToken = jwt.sign(payload, privateKey, { expiresIn: '3 days', algorithm: 'RS256' });
+    // await Promise.resolve(() => {
+    //   jwt.verify(accessToken, publicKey, (err) => {
+    //     if (err) console.error(err);
+    //   });
+    // });
     return { accessToken, refreshToken };
   } catch (error) {
     console.error(error);

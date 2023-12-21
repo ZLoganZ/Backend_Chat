@@ -12,9 +12,13 @@ class AuthController {
     ).send(res);
   }
   static async updatePost(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Update post successfully', await PostService.updatePost({ ...req.body, image: req.file })).send(
-      res
-    );
+    new Ok(
+      'Update post successfully',
+      await PostService.updatePost({
+        userID: req.user._id,
+        updateData: { ...req.body, image: req.file }
+      })
+    ).send(res);
   }
   static async deletePost(req: RequestWithUser, res: Response, _: NextFunction) {
     new Accepted('Delete post successfully', await PostService.deletePost(req.params.postID)).send(res);
@@ -26,7 +30,13 @@ class AuthController {
     ).send(res);
   }
   static async getPost(req: RequestWithUser, res: Response, _: NextFunction) {
-    new Ok('Get post successfully', await PostService.getPost(req.params.postID)).send(res);
+    new Ok(
+      'Get post successfully',
+      await PostService.getPost({
+        userID: req.user._id,
+        postID: req.params.postID
+      })
+    ).send(res);
   }
   static async likePost(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(
@@ -44,6 +54,7 @@ class AuthController {
     new Ok(
       'Search post successfully',
       await PostService.searchPosts({
+        userID: req.user._id,
         page: req.query.page.toString(),
         query: req.query.search.toString(),
         filter: req.query.filter.toString() as FILTERS
@@ -72,6 +83,7 @@ class AuthController {
     new Ok(
       'Get top posts successfully',
       await PostService.getTopPosts({
+        userID: req.user._id,
         page: req.query.page.toString(),
         filter: req.query.filter.toString() as FILTERS
       })
@@ -80,7 +92,10 @@ class AuthController {
   static async getRelatedPostsByPostID(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(
       'Get related posts successfully',
-      await PostService.getRelatedPostsByPostID(req.params.postID)
+      await PostService.getRelatedPostsByPostID({
+        userID: req.user._id,
+        postID: req.params.postID
+      })
     ).send(res);
   }
 }

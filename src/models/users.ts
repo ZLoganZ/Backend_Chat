@@ -90,7 +90,7 @@ const UserSchema = new Schema(
           {
             $addFields: { postCount: { $size: '$posts' } }
           },
-          { $sort: { postCount: -1 } },
+          { $sort: { postCount: -1, createdAt: -1 } },
           { $skip: skip },
           { $limit: 12 },
           { $project: { ...getSelectData(selectUserPopulateArr) } }

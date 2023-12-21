@@ -10,7 +10,7 @@ class CommentService {
     if (!user) throw new BadRequest('Creator is required');
     if (!post) throw new BadRequest('Post ID is required');
 
-    const postFind = await PostModel.getPostByID(post);
+    const postFind = await PostModel.getPostByID(post, user);
 
     if (!postFind) throw new BadRequest('Post is not exist');
 
