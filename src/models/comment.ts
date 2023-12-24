@@ -65,7 +65,10 @@ const CommentSchema = new Schema(
       async getRepliesByCommentID(commentID: string | Types.ObjectId, page: string) {
         const limit = 5;
         const skip = parseInt(page) * limit;
-        return await this.find({ post: commentID, isChild: true })
+
+        const comment = await this.findById(commentID);
+
+        return await this.find({ _id: { $in: comment.replies }, isChild: true })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
