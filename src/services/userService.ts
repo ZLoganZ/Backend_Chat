@@ -46,6 +46,16 @@ class UserService {
 
     return users;
   }
+  static async searchUsers(query: string, page: string) {
+    // const cache = await redis.get(`${REDIS_CACHE.SEARCH_USERS}-${query}-P${page}`);
+    // if (cache) return JSON.parse(cache);
+
+    const users = await UserModel.searchUsers(query, page);
+
+    // redis.setex(`${REDIS_CACHE.SEARCH_USERS}-${query}-P${page}`, randomCacheTime(), JSON.stringify(users));
+
+    return users;
+  }
   static async updateUser(payload: { userID: string; updateUser: IUpdateUser }) {
     const { userID, updateUser } = payload;
 

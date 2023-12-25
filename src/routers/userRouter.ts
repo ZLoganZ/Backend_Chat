@@ -7,6 +7,7 @@ import UserController from '../controllers/userController';
 const router = Router();
 
 router.get('/top-creators', asyncHandler(UserController.getTopCreators));
+router.get('/search', asyncHandler(UserController.searchUsers));
 router.get('/:userIDorAlias', asyncHandler(UserController.getUser));
 router.post('/:userID/follow', asyncHandler(UserController.followUser));
 router.put('/edit', upload.single('image'), asyncHandler(UserController.updateUser));

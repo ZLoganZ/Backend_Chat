@@ -14,6 +14,12 @@ class UserController {
       await UserService.getTopCreators(req.query.page.toString())
     ).send(res);
   }
+  static async searchUsers(req: RequestWithUser, res: Response, _: NextFunction) {
+    new Ok(
+      'Search users successfully',
+      await UserService.searchUsers(req.query.search.toString(), req.query.page.toString())
+    ).send(res);
+  }
   static async updateUser(req: RequestWithUser, res: Response, _: NextFunction) {
     new Ok(
       'Update user successfully',

@@ -284,7 +284,7 @@ const PostSchema = new Schema(
         const user = await model<IUser>('User').findById(userID).lean();
 
         return await this.aggregate([
-          { $match: { $text: { $search: query } } },
+          { $match: { $text: { $search: `\"${query}\"` } } },
           {
             $match: {
               $or: [

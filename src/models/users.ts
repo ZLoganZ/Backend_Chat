@@ -11,7 +11,7 @@ const ObjectId = Schema.Types.ObjectId;
 
 const UserSchema = new Schema(
   {
-    name: { type: String, required: true },
+    name: { type: String, index: true, required: true },
     email: { type: String, required: true, index: true, unique: true },
     password: { type: String, required: true, select: false },
     posts: {
@@ -91,6 +91,18 @@ const UserSchema = new Schema(
             $addFields: { postCount: { $size: '$posts' } }
           },
           { $sort: { postCount: -1, createdAt: -1 } },
+          { $skip: skip },
+          { $limit: 12 },
+          { $project: { ...getSelectData(selectUserPopulateArr) } }
+        ]);
+      },
+      async searchUsers(query: string, page: string) {
+        const limit = 12;
+        const skip = parseInt(page) * limit;
+
+        return await this.aggregate<IUser>([
+          { $match: { $text: { $search: `\"${query}\"` } } },
+          { $sort: { score: { $meta: 'textScore' }, createdAt: -1 } },
           { $skip: skip },
           { $limit: 12 },
           { $project: { ...getSelectData(selectUserPopulateArr) } }
