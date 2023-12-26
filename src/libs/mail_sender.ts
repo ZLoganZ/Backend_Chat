@@ -99,10 +99,10 @@ const sendMailVerifyEmail = (email: string, code: string) => {
                   Sincerely,<br/>
                   The Instafram Team
                 </p>
-                </td>
-                </tr>
-                </table>
-                `
+              </td>
+            </tr>
+          </table>
+          `
   };
   return SendMail(msg);
 };
