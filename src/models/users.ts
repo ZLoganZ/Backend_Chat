@@ -87,9 +87,7 @@ const UserSchema = new Schema(
         const skip = parseInt(page) * limit;
 
         return await this.aggregate<IUser>([
-          {
-            $addFields: { postCount: { $size: '$posts' } }
-          },
+          { $addFields: { postCount: { $size: '$posts' } } },
           { $sort: { postCount: -1, createdAt: -1 } },
           { $skip: skip },
           { $limit: 12 },
