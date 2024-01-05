@@ -51,9 +51,9 @@ export const createTokenPair = async (
     // refresh token
     const refreshToken = jwt.sign(payload, privateKey, { expiresIn: '3 days', algorithm: 'RS256' });
     // await Promise.resolve(() => {
-    //   jwt.verify(accessToken, publicKey, (err) => {
-    //     if (err) console.error(err);
-    //   });
+      jwt.verify(accessToken, publicKey, (err) => {
+        if (err) console.error(err);
+      });
     // });
     return { accessToken, refreshToken };
   } catch (error) {
