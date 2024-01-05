@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -13,10 +13,9 @@ export const hash = async (password: string, salt: number = 10) => {
 export const compare = async (password: string, hash: string) => {
   return await bcrypt.compare(password, hash);
 };
-export const asyncHandler =
-  (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
-  (req: Request, res: Response, next: NextFunction) =>
-    Promise.resolve(fn(req, res, next)).catch(next);
+export const asyncHandler = (fn: RequestHandler): RequestHandler => {
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+};
 export const updateNestedObject = (obj: Record<string, any>) => {
   const newObj: Record<string, any> = {};
   Object.keys(obj).forEach((key) => {
@@ -51,9 +50,9 @@ export const createTokenPair = async (
     // refresh token
     const refreshToken = jwt.sign(payload, privateKey, { expiresIn: '3 days', algorithm: 'RS256' });
     // await Promise.resolve(() => {
-      jwt.verify(accessToken, publicKey, (err) => {
-        if (err) console.error(err);
-      });
+    jwt.verify(accessToken, publicKey, (err) => {
+      if (err) console.error(err);
+    });
     // });
     return { accessToken, refreshToken };
   } catch (error) {
