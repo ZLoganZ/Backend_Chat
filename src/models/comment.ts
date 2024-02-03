@@ -100,7 +100,7 @@ const CommentSchema = new Schema(
         const comment = await this.findById(commentID);
         if (!comment) throw new Error('Comment not found');
 
-        const isLiked = comment.likes.some((like) => like.toString() === userID);
+        const isLiked = comment.likes.some((like) => like.toString() === userID || like === userID);
 
         if (isLiked) {
           await this.findByIdAndUpdate(commentID, { $pull: { likes: userID } });

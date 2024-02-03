@@ -182,7 +182,7 @@ class AuthService {
 
     // Save token pair
     const key = await KeyModel.createKeyToken(
-      newUser._id.toString(),
+      newUser.id,
       publicKey,
       privateKey,
       tokens.refreshToken
