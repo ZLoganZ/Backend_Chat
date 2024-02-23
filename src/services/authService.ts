@@ -1,4 +1,3 @@
-import { Response } from 'express';
 import crypto from 'crypto';
 
 import { UserModel } from '../models/users';
@@ -116,7 +115,7 @@ class AuthService {
 
     // Generate access token
     const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 4096,
+      modulusLength: 2048,
       publicKeyEncoding: {
         type: 'spki',
         format: 'pem'
@@ -166,7 +165,7 @@ class AuthService {
 
     // Generate access token
     const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 4096,
+      modulusLength: 2048,
       publicKeyEncoding: {
         type: 'spki',
         format: 'pem'
